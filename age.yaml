@@ -1,0 +1,36 @@
+type: top
+sub:
+  - type: python
+    name: age
+    mod: pdsphenotypemapping.clinical_feature
+    func: age2
+    params:
+      unit:
+        - unit
+      timestamp:
+        - timestamp
+    depends_on:
+      extract_patient_resource:
+        - patient
+    ret: age
+  - type: python
+    name: extract_patient_resource
+    mod: pdsphenotypemapping.clinical_feature
+    func: get_patient2
+    params:
+      pid:
+        - patient_id
+    depends_on:
+      load_patient_fhir:
+        - fhir
+  - type: python
+    name: load_patient_fhir
+    mod: pdspi.pds_fhir_loader
+    func: get_entries
+    params:
+      json_in_dir:
+        - json_in_dir
+      pid:
+        - pid
+      resource_names:
+        - resource_names
