@@ -16,7 +16,7 @@ def get_patient_resource_entry_array(json_in_dir, pid, resource_name):
         for f in os.listdir(resource_path):
             pid_fn=os.path.join(resource_path, f)
             with open(pid_fn, encoding='latin-1') as pid_fp:
-                rescs = unbundle(json.load(pid_fp))
+                rescs = unbundle(json.load(pid_fp)).value
                 if resource_name == "Patient":
                     rescs_filtered.extend(filter(lambda x: x["id"] == pid, rescs))
                 else:
