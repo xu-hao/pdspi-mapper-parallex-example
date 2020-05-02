@@ -4,25 +4,25 @@ import os
 import argparse
 import sys
 import logging
+from tx.fhir.utils import bundle, unbundle
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
-def pid_json_fullpath(pid_file_name, resource_path):
-    for root, dirs, files in os.walk(resource_path):
-        if pid_file_name in files:
-            return os.path.join(root, pid_file_name)
-
-
 def get_patient_resource_entry_array(json_in_dir, pid, resource_name):
     resource_path=os.path.join(os.path.join(json_in_dir, resource_name))
-    pid_fn=pid_json_fullpath(pid+".json", resource_path)
-    logger.debug("+D pid_fn:"+str(pid_fn)+",pid="+pid+", path="+resource_path+"\n")
-    if pid_fn is None :
-        logger.debug("+ ["+pid+"] ERROR no ["+resource_path+"] found\n")
-        return False
-    with open(pid_fn, encoding='latin-1') as pid_fp:
-        return json.load(pid_fp)
+    rescs_filtered = []
+    if os.path.isdir(resource_path):
+        for f in os.listdir(resource_path):
+            pid_fn=os.path.join(resource_path, f)
+            with open(pid_fn, encoding='latin-1') as pid_fp:
+                rescs = unbundle(json.load(pid_fp))
+                if resource_name == "Patient":
+                    rescs_filtered.extend(filter(lambda x: x["id"] == pid))
+                else:
+                    rescs_filtered.extend(filter(lambda x: x["subject"]["reference"] == f"Patient/{pid}"))
+    
+        return rescs_filtered
 
 
 def get_entries(json_in_dir, pid, resource_names):
