@@ -229,7 +229,6 @@ def age(patient, unit, timestamp):
         if "birthDate" in patient:
             birth_date = patient["birthDate"]
             date_of_birth = strtodate(birth_date)
-            today = strtodate(timestamp).strftime("%Y-%m-%d")
             mage = calculate_age2(date_of_birth, timestamp)
             return mage.map(lambda age: {
                 "variableValue": {
