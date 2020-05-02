@@ -22,7 +22,7 @@ def get_patient_resource_entry_array(json_in_dir, pid, resource_name):
                 else:
                     rescs_filtered.extend(filter(lambda x: x["subject"]["reference"] == f"Patient/{pid}", rescs))
     
-        return rescs_filtered
+        return bundle(rescs_filtered)
 
 
 def get_entries(json_in_dir, pid, resource_names):
