@@ -209,7 +209,12 @@ def bmi(records, unit, timestamp):
     
 
 def calculate_age2(born, timestamp):
-    today = timestamp
+    try:
+        today = strtodate(timestamp)
+    except Exception as e:
+        return Left({
+            "error": str(e)
+        })
     return Right(today.year - born.year - ((today.month, today.day) < (born.month, born.day)))
 
 
@@ -229,7 +234,7 @@ def age(patient, unit, timestamp):
         if "birthDate" in patient:
             birth_date = patient["birthDate"]
             date_of_birth = strtodate(birth_date)
-            today = timestamp.strftime("%Y-%m-%d")
+            today = strtodate(timestamp).strftime("%Y-%m-%d")
             mage = calculate_age2(date_of_birth, timestamp)
             return mage.map(lambda age: {
                 "variableValue": {
@@ -250,7 +255,7 @@ def age(patient, unit, timestamp):
 
 
 def age2(patient, unit, timestamp):
-    return age(patient, unit, timestamp).value
+    return age(patient, unit, tstostr(timestamp)).value
 
 
 def sex(patient, unit, timestamp):
