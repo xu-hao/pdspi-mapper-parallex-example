@@ -209,12 +209,7 @@ def bmi(records, unit, timestamp):
     
 
 def calculate_age2(born, timestamp):
-    try:
-        today = strtodate(timestamp)
-    except Exception as e:
-        return Left({
-            "error": str(e)
-        })
+    today = timestamp
     return Right(today.year - born.year - ((today.month, today.day) < (born.month, born.day)))
 
 
