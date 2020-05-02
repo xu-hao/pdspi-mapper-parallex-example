@@ -18,9 +18,9 @@ def get_patient_resource_entry_array(json_in_dir, pid, resource_name):
             with open(pid_fn, encoding='latin-1') as pid_fp:
                 rescs = unbundle(json.load(pid_fp))
                 if resource_name == "Patient":
-                    rescs_filtered.extend(filter(lambda x: x["id"] == pid))
+                    rescs_filtered.extend(filter(lambda x: x["id"] == pid, rescs))
                 else:
-                    rescs_filtered.extend(filter(lambda x: x["subject"]["reference"] == f"Patient/{pid}"))
+                    rescs_filtered.extend(filter(lambda x: x["subject"]["reference"] == f"Patient/{pid}", rescs))
     
         return rescs_filtered
 
