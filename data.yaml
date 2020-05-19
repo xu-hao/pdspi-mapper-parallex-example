@@ -1,6 +1,8 @@
-unit: year
 timestamp: 2020-05-02T00:00:00Z
-pid: MickeyMouse
-json_in_dir: ./test/ptdata
-resource_names:
-  - Patient
+pids:
+  - MickeyMouse
+json_in_dir: ./tests/ptdata
+X: 10
+Y: 10
+study_start: 2010-01-01T00:00:00Z
+study_end: 2011-01-01T00:00:00Z

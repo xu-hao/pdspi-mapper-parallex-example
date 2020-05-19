@@ -1,0 +1,48 @@
+{
+    "resourceType": "Bundle",
+    "entry": [
+	{
+	    "resource": {
+		"resourceType": "Observation",
+		"code": {
+		    "coding": [
+			{
+			    "system": "http://loinc.org",
+			    "code": "8302-2"
+			}
+		    ]
+		},
+		"subject": {
+		    "reference": "Patient/MickeyMouse"
+		},
+		"effectiveDateTime": "1999-07-02",
+		"valueQuantity": {
+		    "value": 180,
+		    "unit": "cm",
+		    "system": "http://unitsofmeasure.org"
+		}
+	    }
+	}, {
+	    "resource": {
+		"resourceType": "Observation",
+		"code": {
+		    "coding": [
+			{
+			    "system": "http://loinc.org",
+			    "code": "29463-7"
+			}
+		    ]
+		},
+		"subject": {
+		    "reference": "Patient/MickeyMouse"
+		},
+		"effectiveDateTime": "1999-07-02",
+		"valueQuantity": {
+		    "value": 100,
+		    "unit": "kg",
+		    "system": "http://unitsofmeasure.org"
+		}
+	    }
+	}
+    ]
+}

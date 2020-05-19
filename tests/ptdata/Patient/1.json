@@ -1,0 +1,10 @@
+{
+    "resourceType": "Bundle",
+    "entry": [{
+	"resource": {
+	    "resourceType": "Patient",
+	    "id": "MickeyMouse",
+	    "birthDate": "1960-10-1"
+	}
+    }]
+}

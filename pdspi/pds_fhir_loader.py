@@ -17,6 +17,7 @@ def get_patient_resource_entry_array(json_in_dir, pid, resource_name):
             pid_fn=os.path.join(resource_path, f)
             with open(pid_fn, encoding='latin-1') as pid_fp:
                 rescs = unbundle(json.load(pid_fp)).value
+                print("rescs =", rescs)
                 if resource_name == "Patient":
                     rescs_filtered.extend(filter(lambda x: x["id"] == pid, rescs))
                 else:
@@ -26,11 +27,8 @@ def get_patient_resource_entry_array(json_in_dir, pid, resource_name):
 
 
 def get_entries(json_in_dir, pid, resource_names):
-    if len(resource_names) == 1:
-        return get_patient_resource_entry_array(json_in_dir, pid, resource_names[0])
-    else:
-        entries = {}
-        for resource in resource_names:
-            entries[resource] = get_patient_resource_entry_array(json_in_dir, pid, resource)
-        return entries
+    entries = {}
+    for resource in resource_names:
+        entries[resource] = get_patient_resource_entry_array(json_in_dir, pid, resource)
+    return entries
 

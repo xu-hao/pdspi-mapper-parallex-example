@@ -3,7 +3,7 @@ from tx.dateutils.utils import tstostr, strtots, strtodate
 from datetime import datetime, date
 import os
 import re
-from oslash import Left, Right
+from tx.functional.either import Left, Right
 from tx.pint.utils import convert
 
 
@@ -44,7 +44,7 @@ def calculation_template(clinical_variable, resource_name, timestamp_today, reco
         from_value = ""
     else:
         value = vq["value"]
-        from_unit = vq.get("units")
+        from_unit = vq.get("unit")
         if from_unit is None:
             from_unit = vq.get("code")
             from_unit_from = "code"
@@ -103,7 +103,7 @@ def query_records(records, codes, unit, timestamp, clinical_variable, resource_n
             "how": f"no record found code {from_code}"
         })
     else:
-        ts = strtots(timestamp)
+        ts = timestamp.timestamp()
         def key(a):
             ext_key = extract_key(a)
             if ext_key is None:
@@ -121,7 +121,7 @@ def query_records(records, codes, unit, timestamp, clinical_variable, resource_n
         vq = record.get("valueQuantity")
         if vq is not None:
             v = vq["value"]
-            from_u = vq.get("units")
+            from_u = vq.get("unit")
             if from_u is None:
                 from_u = vq.get("code")
             mv = convert(v, from_u, unit)
@@ -136,7 +136,7 @@ def query_records(records, codes, unit, timestamp, clinical_variable, resource_n
         return Right({
             "variableValue": {
                 "value": v,
-                **({"units": unit} if unit is not None else {"units": from_u} if from_u is not None else {}),
+                **({"unit": unit} if unit is not None else {"unit": from_u} if from_u is not None else {}),
             },
             "certitude": cert,
             "timestamp": ts,
@@ -145,14 +145,22 @@ def query_records(records, codes, unit, timestamp, clinical_variable, resource_n
     
 
 def get_observation(patient_id, fhir):
-    records = unbundle(fhir)
-    return records.map(lambda xs : list(filter (lambda x : x["resourceType"] == "Observation", xs)))
+    return unbundle(fhir["Observation"])
+#    return records.map(lambda xs : list(filter (lambda x : x["resourceType"] == "Observation", xs)))
 
 
 def get_condition(patient_id, fhir):
-    records = unbundle(fhir)
-    return records.map(lambda xs : list(filter (lambda x : x["resourceType"] == "Condition", xs)))
+    return unbundle(fhir["Condition"])
+#    return records.map(lambda xs : list(filter (lambda x : x["resourceType"] == "Condition", xs)))
 
+
+def get_medication_request(patient_id, fhir):
+    return unbundle(fhir["MedicationRequest"])
+#    return records.map(lambda xs : list(filter (lambda x : x["resourceType"] == "Condition", xs)))
+
+
+def get(d, k):
+    return d[k]
 
 def one(xs):
     if len(xs) == 1:
@@ -170,13 +178,11 @@ def one(xs):
 
     
 def get_patient(patient_id, fhir):
-    records = unbundle(fhir)
-    return records.bind(lambda xs : one(list(filter (lambda x : x["resourceType"] == "Patient", xs))))
+    return unbundle(fhir["Patient"]).bind(one)
+#    return records.bind(lambda xs : one(list(filter (lambda x : x["resourceType"] == "Patient", xs))))
 
-
-def get_patient2(patient_id, fhir):
-    return get_patient(patient_id, fhir).value
-
+def get_medication_request(patient_id, fhir):
+    return unbundle(fhir["MedicationRequest"])
 
 def height(records, unit, timestamp):
     return query_records(records, [
@@ -198,14 +204,39 @@ def weight(records, unit, timestamp):
         ], unit, timestamp, "weight", "Observation")
 
 
-def bmi(records, unit, timestamp):
-    return query_records(records, [
+def bmi(height, weight, records, unit, timestamp):
+    h = height["variableValue"]
+    w = weight["variableValue"]
+    if h["value"] is None or w["value"] is None:
+        return query_records(records, [
 	    {
 	        "system":"http://loinc.org",
 	        "code":"39156-5",
 	        "is_regex": False
 	    }
         ], unit, timestamp, "bmi", "Observation")
+    else:
+        hc = convert(h["value"], h["unit"], "m")
+        wc = convert(w["value"], w["unit"], "kg")
+
+        if isinstance(hc, Left):
+            return hc
+        elif isinstance(wc, Left):
+            return wc
+        bmi = wc.value / (hc.value * hc.value)
+        return convert(bmi, "kg/m^2", unit).map(lambda bmic: {
+            "variableValue": {
+                "value": bmic,
+                "unit": unit
+            },
+            "certitutde": min(height["certitude"], weight["certitude"]),
+            "how": {
+                "description": "calculated from height and weight",
+                "height": height['how'],
+                "weight": weight['how']
+            }
+        })
+        
     
 
 def calculate_age2(born, timestamp):
@@ -234,7 +265,7 @@ def age(patient, unit, timestamp):
             return mage.map(lambda age: {
                 "variableValue": {
                     "value": age,
-                    "units": "year"
+                    "unit": "year"
                 },
                 "certitude": 2,
                 "how": f"Current date '{today}' minus patient's birthdate (FHIR resource 'Patient' field>'birthDate' = '{birth_date}')"
@@ -247,10 +278,6 @@ def age(patient, unit, timestamp):
                 "certitude": 0,
                 "how": "birthDate not set"
             })
-
-
-def age2(patient, unit, timestamp):
-    return age(patient, unit, timestamp).value
 
 
 def sex(patient, unit, timestamp):
@@ -880,6 +907,9 @@ def kidney_dysfunction(records, unit, timestamp):
         }
     ], unit, timestamp, "kidney dysfunction", "Condition")
 
+
+def intervention(X, Y, study_start, study_end, records):
+    return f"{X}, {Y}, {study_start}, {study_end}"
 
 mapping = {
     "LOINC:2160-0": (get_observation, serum_creatinine, "mg/dL"), # serum creatinine
