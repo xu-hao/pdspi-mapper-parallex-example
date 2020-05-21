@@ -1,5 +1,77 @@
 {
     "resourceType": "Bundle",
-    "entry": []
+    "entry": [{
+	"resource":{
+	    "resourceType": "MedicationRequest",
+	    "medication": {
+		"medicationCodeableConcept": {
+		    "coding": [
+			{
+			    "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+			    "code":"1114195"
+			}
+		    ]
+		}
+	    },
+	    "subject": {
+		"reference": "Patient/MickeyMouse"
+	    },
+	    "authoredOn":"2010-02-01T00:00:00Z"
+	}
+    }, {
+	"resource": {
+	    "resourceType": "MedicationRequest",
+	    "medication": {
+		"medicationCodeableConcept": {
+		    "coding": [
+			{
+			    "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+			    "code":"1599538"
+			}
+		    ]
+		}
+	    },
+	    "subject": {
+		"reference": "Patient/MickeyMouse"		
+	    },
+	    "authoredOn":"2010-06-01T00:00:00Z"
+	}
+    }, {
+	"resource": {
+	    "resourceType": "MedicationRequest",
+	    "medication": {
+		"medicationCodeableConcept": {
+		    "coding": [
+			{
+			    "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+			    "code":"1599538"
+			}
+		    ]
+		}
+	    },
+	    "subject": {
+		"reference": "Patient/MickeyMouse"		
+	    },
+	    "authoredOn":"2010-01-01T00:00:00Z"
+	}
+    }, {
+	"resource": {
+	    "resourceType": "MedicationRequest",
+	    "medication": {
+		"medicationCodeableConcept": {
+		    "coding": [
+			{
+			    "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+			    "code":"1599538"
+			}
+		    ]
+		}
+	    },
+	    "subject": {
+		"reference": "Patient/MickeyMouse"		
+	    },
+	    "authoredOn":"2010-10-01T00:00:00Z"
+	}
+    }]
 	
 }

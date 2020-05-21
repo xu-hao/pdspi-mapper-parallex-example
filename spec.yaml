@@ -1,0 +1,13 @@
+type: map
+coll: pids
+var: pid
+sub:
+  type: dsl
+  python: |-
+    resource_names = ["MedicationRequest"]
+    intervention = pdsphenotypemapping.clinical_feature.DOAC(study_start=study_start, study_end=study_end, records=medication_request)
+    medication_request = pdsphenotypemapping.clinical_feature.get_medication_request(patient_id=pid, fhir=fhir)
+    fhir = pdspi.pds_fhir_loader.get_entries(json_in_dir=json_in_dir, pid=pid, resource_names=resource_names)
+    return {
+      "intervention" : intervention,
+    }

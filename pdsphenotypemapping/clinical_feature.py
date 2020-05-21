@@ -3,73 +3,119 @@ from tx.dateutils.utils import tstostr, strtots, strtodate
 from datetime import datetime, date
 import os
 import re
-from tx.functional.either import Left, Right
+from tx.functional.either import Left, Right, Either, either
+from tx.functional.maybe import Just, Nothing, maybe
+from tx.functional.utils import const
 from tx.pint.utils import convert
 
 
 def extract_key(a):
-    if "effectiveInstant" in a:
-        return a["effectiveInstant"]
-    if "effectiveDateTime" in a:
-        return a["effectiveDateTime"]
-    if "onsetDateTime" in a:
-        return a["onsetDateTime"]
-    return None
-    
+    return key(a).bind(lambda k : Just(a[k]))
 
+    
 def key(a):
     if "effectiveInstant" in a:
-        return "effectiveInstant"
-    if "effectiveDateTime" in a:
-        return "effectiveDateTime"
-    if "onsetDateTime" in a:
-        return "onsetDateTime"
-    return None
+        return Just("effectiveInstant")
+    elif "effectiveDateTime" in a:
+        return Just("effectiveDateTime")
+    elif "onsetDateTime" in a:
+        return Just("onsetDateTime")
+    elif "authoredOn" in a:
+        return Just("authoredOn")
+    return Nothing
         
 
 def calculation(codes):
-    return ",".join(list(map(lambda a: a["system"] + " " + a["code"], codes)))
+    return list(map(lambda a: {
+        "system": a["system"],
+        "code": a["code"]
+    }, codes))
 
 
-def calculation_template(clinical_variable, resource_name, timestamp_today, record, to_unit):
-    from_code = calculation(record["code"]["coding"])
-    timestamp_record = extract_key(record)
-    if timestamp_record is not None:
-        record_timestamp_name = key(record)
-        timestamp = f" (Date computed from FHIR resource '{resource_name}', field>'{record_timestamp_name}' = '{timestamp_record}');"
+def calculation_template(clinical_variable, resource_name, timestamp_range, record, to_unit):
+    if resource_name == "MedicationRequest":
+        code_path = "medication.medicationCodeableConcept"
+        rcode = record["medication"]["medicationCodeableConcept"]
     else:
-        timestamp = " (record has no timestamp)"
+        code_path = "code.coding"
+        rcode = record["code"]
+    from_code = {
+        "computed_from": {
+            "resourceType": resource_name,
+            "field": code_path 
+        },
+        "value": calculation(rcode["coding"])
+    }
+    timestamp_record = extract_key(record)
+    if timestamp_record is not Nothing:
+        record_timestamp_name = key(record).value
+        timestamp = {
+            "value": timestamp_record.value,
+            "computed_from": {
+                "resourceType": resource_name,
+                "field": record_timestamp_name
+            }
+        }
+    else:
+        timestamp = {
+            "value": None,
+            "computed_from": "record has no timestamp"
+        }
     vq = record.get("valueQuantity")
     if vq is None:
-        from_value = ""
+        from_value = {}
+        value = True
+        unit = None
     else:
         value = vq["value"]
         from_unit = vq.get("unit")
         if from_unit is None:
             from_unit = vq.get("code")
-            from_unit_from = "code"
+            from_unit_from = "valueQuantity.code"
         else:
-            from_unit_from = "unit"
+            from_unit_from = "valueQuantity.unit"
         if from_unit is not None:
             def unit_eq(a, b):
                 return a == b
+            unit_from = {
+                "computed_from": {
+                    "resourceType": resource_name,
+                    "field": from_unit_from
+                },
+                "value": from_unit
+            }
             if to_unit is not None and not unit_eq(to_unit, from_unit):
-                unit = f", '{from_unit_from}'>'{from_unit}' converted to {to_unit}"
+                unit = {
+                    "computed_from": ["from", "to"],
+                    "from": unit_from,
+                    "to": {
+                        "value": to_unit
+                    }
+                }
             else:
-                unit = f", '{from_unit_from}'>'{from_unit}'"
+                unit = unit_from
         else:
-            unit = ""
-        from_value = f", field>'valueQuantity'field>'value' = '{value}'{unit}"
-    return f"current as of {timestamp_today}.{timestamp} '{clinical_variable}' computed from FHIR resource '{resource_name}' code {from_code}{from_value}."
+            unit = {
+                "value": None
+            }
+        from_value = {
+            "computed_from": {
+                "resourceType": resource_name,
+                "field": "valueQuantity.value"
+            },
+            "value": value
+        }
+    return {
+        "request_timestamp": timestamp_range,
+        "computed_from": ["timestamp", "code", "value", "unit", "request_timestamp"],
+        "code": from_code,
+        "value": from_value,
+        "unit": unit,
+        "timestamp": timestamp
+    }
 
-def query_records(records, codes, unit, timestamp, clinical_variable, resource_name):
-    if records == None:
-        return Right({
-            "value": None,
-            "certitude": 0,
-            "how": "no record found"
-        })
 
+def filter_records(records, codes, resource_name):
     records_filtered = []
     for record in records:
         for c in codes:  
@@ -77,7 +123,11 @@ def query_records(records, codes, unit, timestamp, clinical_variable, resource_n
             code = c["code"]
             is_regex = c["is_regex"]
 
-            code2 = record.get("code")
+            if resource_name == "MedicationRequest":
+                code2 = record.get("medication", {}).get("medicationCodeableConcept")
+            else:
+                code2 = record.get("code")
+                
             if code2 is None:
                 return Left({
                     "error": f"malformated record: no code",
@@ -93,56 +143,82 @@ def query_records(records, codes, unit, timestamp, clinical_variable, resource_n
                 if c2["system"] == system:
                     if (is_regex and re.search(code, "^" + c2["code"] + "$")) or c2["code"] == code:
                         records_filtered.append(record)
-    if len(records_filtered) == 0:
-        from_code = calculation(codes) 
-        return Right({
-            "variableValue": {
-                "value": None
-            },
-            "certitude": 0,
-            "how": f"no record found code {from_code}"
-        })
+    return Right(records_filtered)
+
+
+def convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_name):
+    ts = extract_key(record)
+    cert = ts.rec(const(2), 1) 
+    vq = record.get("valueQuantity")
+    if vq is not None:
+        v = vq["value"]
+        from_u = vq.get("unit")
+        if from_u is None:
+            from_u = vq.get("code")
+        mv = convert(v, from_u, unit)
+        if isinstance(mv, Left):
+            return mv
+        else:
+            v = mv.value
     else:
-        ts = timestamp.timestamp()
-        def key(a):
-            ext_key = extract_key(a)
-            if ext_key is None:
-                return float("inf")
-            else:
-                return abs(strtots(ext_key) - ts)
-        record = min(records_filtered, key = key)
-        keyr = extract_key(record)
-        if keyr is None:
-            ts = None
-            cert = 1
-        else:
-            ts = extract_key(record)
-            cert = 2
-        vq = record.get("valueQuantity")
-        if vq is not None:
-            v = vq["value"]
-            from_u = vq.get("unit")
-            if from_u is None:
-                from_u = vq.get("code")
-            mv = convert(v, from_u, unit)
-            if isinstance(mv, Left):
-                return mv
-            else:
-                v = mv.value
-        else:
-            v = True
-            from_u = None
-        c = calculation_template(clinical_variable, resource_name, timestamp, record, unit)
+        v = True
+        from_u = None
+    c = calculation_template(clinical_variable, resource_name, timestamp, record, unit)
+    return Right({
+        "variableValue": {
+            "value": v,
+            **({"unit": unit} if unit is not None else {"unit": from_u} if from_u is not None else {}),
+        },
+        "certitude": cert,
+        "timestamp": maybe.to_python(ts),
+        "how": c
+    })
+
+
+def query_records(records, codes, unit, timestamp, clinical_variable, resource_name):
+    if records == None:
         return Right({
-            "variableValue": {
-                "value": v,
-                **({"unit": unit} if unit is not None else {"unit": from_u} if from_u is not None else {}),
-            },
-            "certitude": cert,
-            "timestamp": ts,
-            "how": c
+            "value": None,
+            "certitude": 0,
+            "how": "no record found"
         })
+
+    def handle_records_filtered(records_filtered):
+        if len(records_filtered) == 0:
+            from_code = calculation(codes) 
+            return Right({
+                "variableValue": {
+                    "value": None
+                },
+                "certitude": 0,
+                "how": f"no record found code {from_code}"
+            })
+        else:
+            ts = timestamp.timestamp()
+            def key(a):
+                return extract_key(a).rec(lambda ext_key: abs(strtots(ext_key) - ts), float("inf"))
+
+            record = min(records_filtered, key = key)
+            return convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_name)
+    return filter_records(records, codes, resource_name).bind(handle_records_filtered)
+
     
+def query_records2(records, codes, unit, start, end, clinical_variable, resource_name):
+    def in_study_period(a):
+        ext_key = extract_key(a)
+        if ext_key is Nothing:
+            return False
+        else:
+            record_date = strtodate(ext_key.value)
+            return start <= record_date and record_date < end
+        
+    def handle_records_filtered(records_filtered):
+        records2 = filter(in_study_period, records_filtered)
+        timestamp = {"start": start, "end": end}
+        return either.sequence(map(lambda record: convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_name), records2))
+
+    return filter_records(records, codes, resource_name).bind(handle_records_filtered)
+
 
 def get_observation(patient_id, fhir):
     return unbundle(fhir["Observation"])
@@ -158,9 +234,6 @@ def get_medication_request(patient_id, fhir):
     return unbundle(fhir["MedicationRequest"])
 #    return records.map(lambda xs : list(filter (lambda x : x["resourceType"] == "Condition", xs)))
 
-
-def get(d, k):
-    return d[k]
 
 def one(xs):
     if len(xs) == 1:
@@ -231,7 +304,7 @@ def bmi(height, weight, records, unit, timestamp):
             },
             "certitutde": min(height["certitude"], weight["certitude"]),
             "how": {
-                "description": "calculated from height and weight",
+                "computed_from": ["height", "weight"],
                 "height": height['how'],
                 "weight": weight['how']
             }
@@ -268,7 +341,19 @@ def age(patient, unit, timestamp):
                     "unit": "year"
                 },
                 "certitude": 2,
-                "how": f"Current date '{today}' minus patient's birthdate (FHIR resource 'Patient' field>'birthDate' = '{birth_date}')"
+                "how": {
+                    "request_timestamp": today,
+                    "computed_from": [
+                        "request_timestamp", "birthDate"
+                    ],
+                    "birthDate": {
+                        "computed_from": {
+                            "resourceType": "Patient",
+                            "field": "birthDate"
+                        },
+                        "value": birth_date
+                    }
+                }
             })
         else:
             return Right({
@@ -908,8 +993,19 @@ def kidney_dysfunction(records, unit, timestamp):
     ], unit, timestamp, "kidney dysfunction", "Condition")
 
 
-def intervention(X, Y, study_start, study_end, records):
-    return f"{X}, {Y}, {study_start}, {study_end}"
+def DOAC(records, study_start, study_end):
+    return query_records2(records, [
+        {
+            "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+            "code":"1114195",
+            "is_regex": False
+        }, {
+            "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+            "code":"1599538",
+            "is_regex": False
+        }
+    ], None, study_start, study_end, "DOAC", "MedicationRequest")
+
 
 mapping = {
     "LOINC:2160-0": (get_observation, serum_creatinine, "mg/dL"), # serum creatinine
