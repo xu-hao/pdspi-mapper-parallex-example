@@ -4,7 +4,6 @@ weight_unit = "kg"
 bmi_unit = "kg/m^2"
 timestamp = "2020-05-02T00:00:00Z"
 pids = ["MickeyMouse"]
-json_in_dir = "./tests/ptdata"
 x = 10
 y = 10
 study_start = "2010-01-01T00:00:00Z"
