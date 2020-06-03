@@ -175,7 +175,7 @@ def convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_n
     })
 
 
-def query_records(records, codes, unit, timestamp, clinical_variable, resource_name):
+def query_records_closest(records, codes, unit, timestamp, clinical_variable, resource_name):
     if records == None:
         return Right({
             "value": None,
@@ -202,8 +202,73 @@ def query_records(records, codes, unit, timestamp, clinical_variable, resource_n
             return convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_name)
     return filter_records(records, codes, resource_name).bind(handle_records_filtered)
 
+def diff_before(x):
+    if x <= 0:
+        return -x
+    else:
+        return float("inf")
     
-def query_records2(records, codes, unit, start, end, clinical_variable, resource_name):
+def diff_after(x):
+    if x >= 0:
+        return x
+    else:
+        return float("inf")
+    
+def query_records_closest_before(records, codes, unit, timestamp, clinical_variable, resource_name):
+    if records == None:
+        return Right({
+            "value": None,
+            "certitude": 0,
+            "how": "no record found"
+        })
+
+    def handle_records_filtered(records_filtered):
+        if len(records_filtered) == 0:
+            from_code = calculation(codes) 
+            return Right({
+                "variableValue": {
+                    "value": None
+                },
+                "certitude": 0,
+                "how": f"no record found code {from_code}"
+            })
+        else:
+            ts = timestamp.timestamp()
+            def key(a):
+                return extract_key(a).rec(lambda ext_key: diff_before(strtots(ext_key) - ts), float("inf"))
+
+            record = min(records_filtered, key = key)
+            return convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_name)
+    return filter_records(records, codes, resource_name).bind(handle_records_filtered)
+
+def query_records_closest_after(records, codes, unit, timestamp, clinical_variable, resource_name):
+    if records == None:
+        return Right({
+            "value": None,
+            "certitude": 0,
+            "how": "no record found"
+        })
+
+    def handle_records_filtered(records_filtered):
+        if len(records_filtered) == 0:
+            from_code = calculation(codes) 
+            return Right({
+                "variableValue": {
+                    "value": None
+                },
+                "certitude": 0,
+                "how": f"no record found code {from_code}"
+            })
+        else:
+            ts = timestamp.timestamp()
+            def key(a):
+                return extract_key(a).rec(lambda ext_key: diff_after(strtots(ext_key) - ts), float("inf"))
+
+            record = min(records_filtered, key = key)
+            return convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_name)
+    return filter_records(records, codes, resource_name).bind(handle_records_filtered)
+
+def query_records_interval(records, codes, unit, start, end, clinical_variable, resource_name):
     def in_study_period(a):
         ext_key = extract_key(a)
         if ext_key is Nothing:
@@ -258,7 +323,7 @@ def get_medication_request(patient_id, fhir):
     return unbundle(fhir["MedicationRequest"])
 
 def height(records, unit, timestamp):
-    return query_records(records, [
+    return query_records_closest(records, [
 	    {
 	        "system":"http://loinc.org",
 	        "code":"8302-2",
@@ -268,7 +333,7 @@ def height(records, unit, timestamp):
 
 
 def weight(records, unit, timestamp):
-    return query_records(records, [
+    return query_records_closest(records, [
 	    {
 	        "system":"http://loinc.org",
 	        "code":"29463-7",
@@ -278,7 +343,7 @@ def weight(records, unit, timestamp):
 
 
 def height2(records, unit, start, end):
-    return query_records2(records, [
+    return query_records_interval(records, [
 	    {
 	        "system":"http://loinc.org",
 	        "code":"8302-2",
@@ -288,7 +353,7 @@ def height2(records, unit, start, end):
 
 
 def weight2(records, unit, start, end):
-    return query_records2(records, [
+    return query_records_interval(records, [
 	    {
 	        "system":"http://loinc.org",
 	        "code":"29463-7",
@@ -301,7 +366,7 @@ def bmi2(height, weight, records, unit, start, end):
     h = height["variableValue"]
     w = weight["variableValue"]
     if h["value"] is None or w["value"] is None:
-        return query_records2(records, [
+        return query_records_interval(records, [
 	    {
 	        "system":"http://loinc.org",
 	        "code":"39156-5",
@@ -335,7 +400,7 @@ def bmi(height, weight, records, unit, timestamp):
     h = height["variableValue"]
     w = weight["variableValue"]
     if h["value"] is None or w["value"] is None:
-        return query_records(records, [
+        return query_records_closest(records, [
 	    {
 	        "system":"http://loinc.org",
 	        "code":"39156-5",
@@ -365,7 +430,6 @@ def bmi(height, weight, records, unit, timestamp):
         })
         
     
-
 def calculate_age2(born, timestamp):
     today = timestamp
     return Right(today.year - born.year - ((today.month, today.day) < (born.month, born.day)))
@@ -516,7 +580,7 @@ ethnicity = demographic_extension("http://hl7.org/fhir/StructureDefinition/us-co
 
 
 def serum_creatinine(records, unit, timestamp):
-    return query_records(records, [
+    return query_records_closest(records, [
 	{
 	    "system":"http://loinc.org",
 	    "code":"2160-0",
@@ -526,7 +590,7 @@ def serum_creatinine(records, unit, timestamp):
 
 
 def pregnancy(records, unit, timestamp):
-    return query_records(records, [
+    return query_records_closest(records, [
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"^Z34\\.",
@@ -788,15 +852,15 @@ bleeding_patterns = [
     ]
 
 def bleeding(records, timestamp):
-    return query_records(records, bleeding_patterns, None, timestamp, "bleeding", "Condition")
+    return query_records_closest(records, bleeding_patterns, None, timestamp, "bleeding", "Condition")
 
 
 def bleeding2(records, start, end):
-    return query_records2(records, bleeding_patterns, None, start, end, "bleeding", "Condition")
+    return query_records_interval(records, bleeding_patterns, None, start, end, "bleeding", "Condition")
 
 
 def kidney_dysfunction(records, unit, timestamp):
-    return query_records(records, [
+    return query_records_closest(records, [
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N00\\..*",
@@ -1053,7 +1117,7 @@ def kidney_dysfunction(records, unit, timestamp):
 
 
 def DOAC2(records, start, end):
-    return query_records2(records, [
+    return query_records_interval(records, [
         {
             "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
             "code":"1114195",
