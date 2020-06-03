@@ -175,7 +175,7 @@ def convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_n
     })
 
 
-def query_records_closest(records, codes, unit, timestamp, clinical_variable, resource_name):
+def _query_records_closest(records, codes, unit, timestamp, clinical_variable, resource_name, diff_func):
     if records == None:
         return Right({
             "value": None,
@@ -196,77 +196,51 @@ def query_records_closest(records, codes, unit, timestamp, clinical_variable, re
         else:
             ts = timestamp.timestamp()
             def key(a):
-                return extract_key(a).rec(lambda ext_key: abs(strtots(ext_key) - ts), float("inf"))
-
-            record = min(records_filtered, key = key)
-            return convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_name)
+                return extract_key(a).rec(lambda ext_key: diff_func(strtots(ext_key) - ts), float("inf"))
+        
+            records_filtered_key = [(a, key(a)) for a in records_filtered]
+            records_with_key = [a for a in records_filtered_key if a[1] is not None]
+        
+            if len(records_with_key) == 0:
+                return Right({
+                    "variableValue": {
+                        "value": None
+                    },
+                    "certitude": 0,
+                    "how": f"no record found code {from_code}"
+                })
+            else:
+                record = min(records_with_key, key = lambda a: a[1])[0]
+                return convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_name)
+        
     return filter_records(records, codes, resource_name).bind(handle_records_filtered)
+
 
 def diff_before(x):
     if x <= 0:
         return -x
     else:
-        return float("inf")
-    
+        return None
+
+
 def diff_after(x):
     if x >= 0:
         return x
     else:
-        return float("inf")
-    
+        return None
+
+
+def query_records_closest(records, codes, unit, timestamp, clinical_variable, resource_name):
+    return _query_records_closest(records, codes, unit, timestamp, clinical_variable, resource_name, abs)
+
+
 def query_records_closest_before(records, codes, unit, timestamp, clinical_variable, resource_name):
-    if records == None:
-        return Right({
-            "value": None,
-            "certitude": 0,
-            "how": "no record found"
-        })
+    return _query_records_closest(records, codes, unit, timestamp, clinical_variable, resource_name, diff_before)
 
-    def handle_records_filtered(records_filtered):
-        if len(records_filtered) == 0:
-            from_code = calculation(codes) 
-            return Right({
-                "variableValue": {
-                    "value": None
-                },
-                "certitude": 0,
-                "how": f"no record found code {from_code}"
-            })
-        else:
-            ts = timestamp.timestamp()
-            def key(a):
-                return extract_key(a).rec(lambda ext_key: diff_before(strtots(ext_key) - ts), float("inf"))
-
-            record = min(records_filtered, key = key)
-            return convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_name)
-    return filter_records(records, codes, resource_name).bind(handle_records_filtered)
 
 def query_records_closest_after(records, codes, unit, timestamp, clinical_variable, resource_name):
-    if records == None:
-        return Right({
-            "value": None,
-            "certitude": 0,
-            "how": "no record found"
-        })
+    return _query_records_closest(records, codes, unit, timestamp, clinical_variable, resource_name, diff_after)
 
-    def handle_records_filtered(records_filtered):
-        if len(records_filtered) == 0:
-            from_code = calculation(codes) 
-            return Right({
-                "variableValue": {
-                    "value": None
-                },
-                "certitude": 0,
-                "how": f"no record found code {from_code}"
-            })
-        else:
-            ts = timestamp.timestamp()
-            def key(a):
-                return extract_key(a).rec(lambda ext_key: diff_after(strtots(ext_key) - ts), float("inf"))
-
-            record = min(records_filtered, key = key)
-            return convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_name)
-    return filter_records(records, codes, resource_name).bind(handle_records_filtered)
 
 def query_records_interval(records, codes, unit, start, end, clinical_variable, resource_name):
     def in_study_period(a):
