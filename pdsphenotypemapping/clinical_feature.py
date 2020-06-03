@@ -1,6 +1,6 @@
 from tx.fhir.utils import unbundle
 from tx.dateutils.utils import tstostr, strtots, strtodate
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 import os
 import re
 from tx.functional.either import Left, Right, Either, either
@@ -209,7 +209,7 @@ def query_records2(records, codes, unit, start, end, clinical_variable, resource
         if ext_key is Nothing:
             return False
         else:
-            record_date = strtodate(ext_key.value)
+            record_date = strtodate2(ext_key.value)
             return start <= record_date and record_date < end
         
     def handle_records_filtered(records_filtered):
@@ -277,6 +277,60 @@ def weight(records, unit, timestamp):
         ], unit, timestamp, "weight", "Observation")
 
 
+def height2(records, unit, start, end):
+    return query_records2(records, [
+	    {
+	        "system":"http://loinc.org",
+	        "code":"8302-2",
+	        "is_regex": False
+	    }
+        ], unit, start, end, "height", "Observation")
+
+
+def weight2(records, unit, start, end):
+    return query_records2(records, [
+	    {
+	        "system":"http://loinc.org",
+	        "code":"29463-7",
+	        "is_regex": False
+	    }
+        ], unit, start, end, "weight", "Observation")
+
+
+def bmi2(height, weight, records, unit, start, end):
+    h = height["variableValue"]
+    w = weight["variableValue"]
+    if h["value"] is None or w["value"] is None:
+        return query_records2(records, [
+	    {
+	        "system":"http://loinc.org",
+	        "code":"39156-5",
+	        "is_regex": False
+	    }
+        ], unit, start, end, "bmi", "Observation").map(lambda x:average(x,start,end))
+    else:
+        hc = convert(h["value"], h["unit"], "m")
+        wc = convert(w["value"], w["unit"], "kg")
+
+        if isinstance(hc, Left):
+            return hc
+        elif isinstance(wc, Left):
+            return wc
+        bmi = wc.value / (hc.value * hc.value)
+        return convert(bmi, "kg/m^2", unit).map(lambda bmic: {
+            "variableValue": {
+                "value": bmic,
+                "unit": unit
+            },
+            "certitutde": min(height["certitude"], weight["certitude"]),
+            "how": {
+                "computed_from": ["height", "weight"],
+                "height": height['how'],
+                "weight": weight['how']
+            }
+        })
+        
+    
 def bmi(height, weight, records, unit, timestamp):
     h = height["variableValue"]
     w = weight["variableValue"]
@@ -287,7 +341,7 @@ def bmi(height, weight, records, unit, timestamp):
 	        "code":"39156-5",
 	        "is_regex": False
 	    }
-        ], unit, timestamp, "bmi", "Observation")
+        ], unit, timestamp, "bmi", "Observation").map(average)
     else:
         hc = convert(h["value"], h["unit"], "m")
         wc = convert(w["value"], w["unit"], "kg")
@@ -332,7 +386,7 @@ def age(patient, unit, timestamp):
     else:
         if "birthDate" in patient:
             birth_date = patient["birthDate"]
-            date_of_birth = strtodate(birth_date)
+            date_of_birth = strtodate2(birth_date)
             today = timestamp.strftime("%Y-%m-%d")
             mage = calculate_age2(date_of_birth, timestamp)
             return mage.map(lambda age: {
@@ -480,9 +534,7 @@ def pregnancy(records, unit, timestamp):
         }
     ], unit, timestamp, "pregnancy", "Condition")
 
-
-def bleeding(records, unit, timestamp):
-    return query_records(records, [
+bleeding_patterns = [
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"I60\\..*",
@@ -733,7 +785,14 @@ def bleeding(records, unit, timestamp):
             "code":"R58\\..*",
             "is_regex":True,
         }
-    ], unit, timestamp, "bleeding", "Condition")
+    ]
+
+def bleeding(records, timestamp):
+    return query_records(records, bleeding_patterns, None, timestamp, "bleeding", "Condition")
+
+
+def bleeding2(records, start, end):
+    return query_records2(records, bleeding_patterns, None, start, end, "bleeding", "Condition")
 
 
 def kidney_dysfunction(records, unit, timestamp):
@@ -993,7 +1052,7 @@ def kidney_dysfunction(records, unit, timestamp):
     ], unit, timestamp, "kidney dysfunction", "Condition")
 
 
-def DOAC(records, study_start, study_end):
+def DOAC2(records, start, end):
     return query_records2(records, [
         {
             "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
@@ -1004,7 +1063,50 @@ def DOAC(records, study_start, study_end):
             "code":"1599538",
             "is_regex": False
         }
-    ], None, study_start, study_end, "DOAC", "MedicationRequest")
+    ], None, start, end, "DOAC", "MedicationRequest")
+
+
+def strtodate2(s):
+    date = strtodate(s)
+    if date.tzinfo is None or date.tzinfo.utcoffset(date) is None:
+        date = date.replace(tzinfo=timezone.utc)
+    return date
+
+
+def get_first_date(values):
+    sorted_values = sorted(values, key=lambda x: strtodate2(x["timestamp"]))
+    if len(sorted_values) == 0:
+        return None
+    else:
+        return strtodate2(sorted_values[0]["timestamp"])
+
+
+def get_first(values):
+    sorted_values = sorted(values, key=lambda x: strtodate2(x["timestamp"]))
+    if len(sorted_values) == 0:
+        return None
+    else:
+        return sorted_values[0]
+
+
+def get_last(values):
+    sorted_values = sorted(values, key=lambda x: strtodate2(x["timestamp"]))
+    if len(sorted_values) == 0:
+        return None
+    else:
+        return sorted_values[-1]
+
+
+def adverse_event(records, start, end):
+    return []
+
+
+def average(values, start, end):
+    return values[0] if len(values) > 0 else {
+        "variableValue": {
+            "value": None
+        }
+    }
 
 
 mapping = {

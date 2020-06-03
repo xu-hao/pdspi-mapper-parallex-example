@@ -1,13 +1,43 @@
-type: map
-coll: pids
-var: pid
-sub:
-  type: dsl
-  python: |-
-    resource_names = ["MedicationRequest"]
-    intervention = pdsphenotypemapping.clinical_feature.DOAC(study_start=study_start, study_end=study_end, records=medication_request)
-    medication_request = pdsphenotypemapping.clinical_feature.get_medication_request(patient_id=pid, fhir=fhir)
+  resource_names = ["MedicationRequest", "Condition", "Observation"]
+  height_unit = "m"
+  weight_unit = "kg"
+  bmi_unit = "kg/m^2"
+  timestamp = "2020-05-02T00:00:00Z"
+  pids = ["MickeyMouse"]
+  json_in_dir = "./tests/ptdata"
+  x = 10
+  y = 10
+  study_start = "2010-01-01T00:00:00Z"
+  study_end = "2011-01-01T00:00:00Z"
+  for pid in pids:
     fhir = pdspi.pds_fhir_loader.get_entries(json_in_dir=json_in_dir, pid=pid, resource_names=resource_names)
+    medication_request = pdsphenotypemapping.clinical_feature.get_medication_request(patient_id=pid, fhir=fhir)
+    start = tx.dateutils.utils.strtodate(st=study_start)
+    end = tx.dateutils.utils.strtodate(st=study_end)
+    intervention = pdsphenotypemapping.clinical_feature.DOAC2(start=start, end=end, records=medication_request)
+    date0 = pdsphenotypemapping.clinical_feature.get_first_date(values=intervention)
+    xdelta = dateutils.relativedelta(months=x)
+    ydelta = dateutils.relativedelta(months=y)
+    window_start = data.sub(a=date0, b=xdelta)
+    window_end = data.add(a=date0, b=ydelta)
+    condition = pdsphenotypemapping.clinical_feature.get_condition(patient_id=pid, fhir=fhir)
+    observation = pdsphenotypemapping.clinical_feature.get_observation(patient_id=pid, fhir=fhir)
+    height_before = pdsphenotypemapping.clinical_feature.height2(unit=height_unit, start=start, end=date0, records=observation)
+    weight_before = pdsphenotypemapping.clinical_feature.weight2(unit=weight_unit, start=start, end=date0, records=observation)
+    height_before_average = pdsphenotypemapping.clinical_feature.average(start=start, end=date0, values=height_before)
+    weight_before_average = pdsphenotypemapping.clinical_feature.average(start=start, end=date0, values=weight_before)
+    bmi_before = pdsphenotypemapping.clinical_feature.bmi2(height=height_before_average, weight=weight_before_average, unit=bmi_unit, start=start, end=date0, records=observation)
+    adverse_event = pdsphenotypemapping.clinical_feature.bleeding2(start=date0, end=window_end, records=condition)
+    adverse_event_date0 = pdsphenotypemapping.clinical_feature.get_first_date(values=adverse_event)
+    end2 = data.collage(value=adverse_event_date0, value2=end)
+    height_after = pdsphenotypemapping.clinical_feature.height2(unit=height_unit, start=start, end=end2, records=observation)
+    weight_after = pdsphenotypemapping.clinical_feature.weight2(unit=weight_unit, start=start, end=end2, records=observation)
+    height_after_average = pdsphenotypemapping.clinical_feature.average(start=start, end=end2, values=height_before)
+    weight_after_average = pdsphenotypemapping.clinical_feature.average(start=start, end=end2, values=weight_before)
+    bmi_after = pdsphenotypemapping.clinical_feature.bmi2(height=height_before_average, weight=weight_before_average, unit=bmi_unit, start=date0, end=end2, records=observation)
+    outcome = data.ne(a=adverse_event_date0, b=None)
     return {
-      "intervention" : intervention,
+      "outcome": outcome,
+      "bmi_before": bmi_before,
+      "bmi_after": bmi_after
     }

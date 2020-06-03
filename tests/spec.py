@@ -1,6 +1,4 @@
-type: dsl
-python: |-
-  for pid in pids:
+for pid in pids:
     age_unit = "year"
     height_unit = "m"
     weight_unit = "kg"
