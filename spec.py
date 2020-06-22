@@ -1,15 +1,11 @@
-resource_names = ["MedicationRequest", "Condition", "Observation"]
 height_unit = "m"
 weight_unit = "kg"
 bmi_unit = "kg/m^2"
-timestamp = "2020-05-02T00:00:00Z"
-pids = ["MickeyMouse"]
 x = 10
 y = 10
 study_start = "2010-01-01T00:00:00Z"
 study_end = "2011-01-01T00:00:00Z"
 for pid in pids:
-    fhir = pdspi.pds_fhir_loader.get_entries(json_in_dir=json_in_dir, pid=pid, resource_names=resource_names)
     medication_request = pdsphenotypemapping.clinical_feature.get_medication_request(patient_id=pid, fhir=fhir)
     start = tx.dateutils.utils.strtodate(study_start)
     end = tx.dateutils.utils.strtodate(study_end)

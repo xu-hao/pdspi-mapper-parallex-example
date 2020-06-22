@@ -1,0 +1,15 @@
+version: '3.4'
+services:
+  
+  pdspi-mapper-parallex-example-test:
+    build:
+      context: .
+      dockerfile: tests/Dockerfile
+    command: ["-s", "-vv", "-x"] # , "-k", "test_api_age"]
+    depends_on:
+      - pdspi-mapper-parallex-example
+
+
+
+    
+    

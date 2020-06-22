@@ -1,0 +1,11 @@
+version: '3.4'
+services:
+  
+  pdspi-mapper-parallex-example:
+    build:
+      context: .
+    restart: always
+    ports:
+      - $API_PORT:8080
+
+    
