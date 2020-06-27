@@ -4,7 +4,9 @@ RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 RUN apk --no-cache add gcc musl-dev libffi-dev file make
-RUN pip3 install --no-cache-dir flask gunicorn[gevent]==19.9.0 connexion[swagger-ui] python-dateutil pint tx-parallex tx-functional
+
+COPY requirements.txt requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY data.py /usr/src/app/data.py
 COPY pdspi /usr/src/app/pdspi

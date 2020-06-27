@@ -7,6 +7,11 @@ from tx.functional.either import Left, Right, Either, either
 from tx.functional.maybe import Just, Nothing, maybe
 from tx.functional.utils import const
 from tx.pint.utils import convert
+import logging
+from tx.readable_log import getLogger
+
+logger = getLogger(__name__, logging.INFO)
+
 
 
 def extract_key(a):
@@ -118,6 +123,7 @@ def calculation_template(clinical_variable, resource_name, timestamp_range, reco
 def filter_records(records, codes, resource_name):
     records_filtered = []
     for record in records:
+        logger.info(f"filtering record: {record}")
         for c in codes:  
             system = c["system"]
             code = c["code"]
@@ -1091,6 +1097,7 @@ def kidney_dysfunction(records, unit, timestamp):
 
 
 def DOAC2(records, start, end):
+    print("records = " + str(records))
     return query_records_interval(records, [
         {
             "system":"http://www.nlm.nih.gov/research/umls/rxnorm",

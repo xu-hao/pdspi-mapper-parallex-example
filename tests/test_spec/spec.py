@@ -1,3 +1,4 @@
+fhir = pdspi.pds_fhir_loader.get_entries(json_in_dir=json_in_dir, pids=pids, resource_names=resource_names)
 for pid in pids:
     age_unit = "year"
     height_unit = "m"
@@ -13,7 +14,6 @@ for pid in pids:
     medication_request = pdsphenotypemapping.clinical_feature.get_medication_request(patient_id=pid, fhir=fhir)
     condition = pdsphenotypemapping.clinical_feature.get_condition(patient_id=pid, fhir=fhir)
     observation = pdsphenotypemapping.clinical_feature.get_observation(patient_id=pid, fhir=fhir)
-    fhir = pdspi.pds_fhir_loader.get_entries(json_in_dir=json_in_dir, pid=pid, resource_names=resource_names)
     return {
       "age" : age,
       "bmi" : bmi,
