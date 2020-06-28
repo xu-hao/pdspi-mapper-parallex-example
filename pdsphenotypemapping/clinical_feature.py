@@ -266,17 +266,17 @@ def query_records_interval(records, codes, unit, start, end, clinical_variable, 
 
 
 def get_observation(patient_id, fhir):
-    return unbundle(fhir["Observation"])
+    return unbundle(fhir[patient_id]["Observation"])
 #    return records.map(lambda xs : list(filter (lambda x : x["resourceType"] == "Observation", xs)))
 
 
 def get_condition(patient_id, fhir):
-    return unbundle(fhir["Condition"])
+    return unbundle(fhir[patient_id]["Condition"])
 #    return records.map(lambda xs : list(filter (lambda x : x["resourceType"] == "Condition", xs)))
 
 
 def get_medication_request(patient_id, fhir):
-    return unbundle(fhir["MedicationRequest"])
+    return unbundle(fhir[patient_id]["MedicationRequest"])
 #    return records.map(lambda xs : list(filter (lambda x : x["resourceType"] == "Condition", xs)))
 
 
@@ -296,11 +296,11 @@ def one(xs):
 
     
 def get_patient(patient_id, fhir):
-    return unbundle(fhir["Patient"]).bind(one)
+    return unbundle(fhir[patient_id]["Patient"]).bind(one)
 #    return records.bind(lambda xs : one(list(filter (lambda x : x["resourceType"] == "Patient", xs))))
 
 def get_medication_request(patient_id, fhir):
-    return unbundle(fhir["MedicationRequest"])
+    return unbundle(fhir[patient_id]["MedicationRequest"])
 
 def height(records, unit, timestamp):
     return query_records_closest(records, [

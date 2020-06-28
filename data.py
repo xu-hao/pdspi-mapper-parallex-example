@@ -19,6 +19,9 @@ def ne(a,b):
 def coalesce(value, value2):
     return value2 if value is None else value
 
+def contains(coll, elem):
+    return elem in coll
+
 
 
 
