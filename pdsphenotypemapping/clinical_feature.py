@@ -1,3 +1,4 @@
+from functools import reduce
 from tx.fhir.utils import unbundle
 from tx.dateutils.utils import tstostr, strtots, strtodate
 from datetime import datetime, date, timezone
@@ -15,7 +16,7 @@ logger = getLogger(__name__, logging.INFO)
 
 
 def extract_key(a):
-    return key(a).bind(lambda k : Just(a[k]))
+    return key(a).bind(lambda k : Just(reduce(lambda a,i: a[i], k, a) if isinstance(k, list) else a[k]))
 
     
 def key(a):
@@ -27,6 +28,8 @@ def key(a):
         return Just("onsetDateTime")
     elif "authoredOn" in a:
         return Just("authoredOn")
+    elif "dispenseRequest" in a:
+        return Just(["dispenseRequest", "validityPeriod", "start"])
     return Nothing
         
 
@@ -265,6 +268,19 @@ def query_records_interval(records, codes, unit, start, end, clinical_variable, 
     return filter_records(records, codes, resource_name).bind(handle_records_filtered)
 
 
+def filter_records_interval(records, start, end):
+    def in_study_period(a):
+        ext_key = extract_key(a)
+        if ext_key is Nothing:
+            return False
+        else:
+            record_date = strtodate2(ext_key.value)
+            return start <= record_date and record_date < end
+        
+    records = filter(in_study_period, records)
+    return records
+
+
 def get_observation(patient_id, fhir):
     return unbundle(fhir[patient_id]["Observation"])
 #    return records.map(lambda xs : list(filter (lambda x : x["resourceType"] == "Observation", xs)))
@@ -273,6 +289,21 @@ def get_observation(patient_id, fhir):
 def get_condition(patient_id, fhir):
     return unbundle(fhir[patient_id]["Condition"])
 #    return records.map(lambda xs : list(filter (lambda x : x["resourceType"] == "Condition", xs)))
+
+
+def get_condition_icd_code(patient_id, fhir):
+    records = unbundle(fhir['Condition']).value
+    icd_codes = []
+    icd_10_url = 'http://hl7.org/fhir/sid/icd-10-cm'
+    icd_9_url = 'http://hl7.org/fhir/sid/icd-9-cm'
+    for rec in records:
+        codes = rec.get('code', {}).get('coding', [])
+        for code in codes:
+            icd_system = code.get('system', '')
+            if icd_system == icd_10_url or icd_system == icd_9_url:
+                icd_codes.append({'system': icd_system,
+                                  'code': code.get('code', '')})
+    return icd_codes
 
 
 def get_medication_request(patient_id, fhir):
