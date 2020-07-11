@@ -1,6 +1,6 @@
 FROM python:3-alpine
 
-RUN pip3 install --no-cache-dir pytest requests pyyaml python-dateutil==2.8.1 tx-functional>=0.0.16 tx-parallex>=0.0.30 pint
+RUN pip3 install --no-cache-dir pytest requests pyyaml python-dateutil==2.8.1 tx-functional>=0.0.16 tx-parallex>=0.0.38 pint
 
 RUN mkdir /test
 
@@ -17,6 +17,8 @@ COPY tests/test_spec/spec.py /test/spec.py
 COPY tests/test_spec/data.yaml /test/data.yaml
 COPY tests/test_*.py /test/
 COPY tests/ptdata /test/ptdata
+
+ENV PYTHONPATH=/test
 
 ENTRYPOINT ["pytest"]
 CMD ["-s"]

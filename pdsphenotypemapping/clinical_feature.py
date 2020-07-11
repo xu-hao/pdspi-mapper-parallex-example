@@ -330,9 +330,6 @@ def get_patient(patient_id, fhir):
     return unbundle(fhir[patient_id]["Patient"]).bind(one)
 #    return records.bind(lambda xs : one(list(filter (lambda x : x["resourceType"] == "Patient", xs))))
 
-def get_medication_request(patient_id, fhir):
-    return unbundle(fhir[patient_id]["MedicationRequest"])
-
 def height(records, unit, timestamp):
     return query_records_closest(records, [
 	    {
