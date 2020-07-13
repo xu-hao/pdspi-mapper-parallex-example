@@ -292,7 +292,7 @@ def get_condition(patient_id, fhir):
 
 
 def get_condition_icd_code(patient_id, fhir):
-    records = unbundle(fhir['Condition']).value
+    records = unbundle(fhir[patient_id]['Condition']).value
     icd_codes = []
     icd_10_url = 'http://hl7.org/fhir/sid/icd-10-cm'
     icd_9_url = 'http://hl7.org/fhir/sid/icd-9-cm'
