@@ -19,7 +19,7 @@ log.info(f"looking for fhir at {data_dir}")
 
 resource_names = ["MedicationRequest", "Condition", "Observation"]
 
-def query(pids, timestamp):
+def query(pids, timestamp, spec_name=None):
     fhir = get_entries(json_in_dir=data_dir, pids=pids, resource_names=resource_names)
 
     log.info(f"fhir = {fhir}")
@@ -27,7 +27,8 @@ def query(pids, timestamp):
     return requests.post(f"http://pdspi-mapper-parallex-example:8080/mapping", headers=json_headers, json={
         "data": fhir,
         "pids": pids,
-        "timestamp": timestamp
+        "timestamp": timestamp,
+        **({} if spec_name is None else {"specName": spec_name})
     })
 
 
@@ -50,6 +51,18 @@ def test_api_spec():
                 "value": None
             }
         },
+        "outcome": False
+    }]
+
+def test_api_spec2():
+    timestamp = "2020-05-02T00:00:00Z"
+    pids = ["MickeyMouse"]
+
+    result = query(pids, timestamp, spec_name="spec2")
+    log.info(result.content)
+    assert result.status_code == 200
+                
+    assert result.json() == [{
         "outcome": False
     }]
 

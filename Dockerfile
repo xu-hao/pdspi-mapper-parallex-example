@@ -11,7 +11,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 COPY data.py /usr/src/app/data.py
 COPY pdspi /usr/src/app/pdspi
 COPY api /usr/src/app/api
-COPY spec.py /usr/src/app/api/spec.py
+# COPY spec.py /usr/src/app/api/spec/spec.py
 COPY pdsphenotypemapping /usr/src/app/pdsphenotypemapping
 COPY tx-utils/src /usr/src/app
 

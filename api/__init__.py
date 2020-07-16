@@ -6,11 +6,6 @@ from tx.parallex import start_python
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-spec_path = Path(__file__).parent / "spec.py"
-
-with open(spec_path) as f:
-    spec = f.read()
-
 number_of_workers = os.environ.get("PARALLEL_RUNS", 3)
 
 def assign(array, keys, value):
@@ -32,6 +27,11 @@ def assign(array, keys, value):
 
     
 def mappingClinicalFromData(body):
+    spec_path = Path(__file__).parent / "config" / f"{body.get('specName', 'spec')}.py"
+
+    with open(spec_path) as f:
+        spec = f.read()
+
     res = start_python(number_of_workers, py = spec, data = {
         "pids": body["pids"],
         "timestamp": body["timestamp"],

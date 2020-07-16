@@ -7,5 +7,7 @@ services:
     restart: always
     ports:
       - $API_PORT:8080
+    volumes:
+      - ./config:/usr/src/app/api/config
 
     

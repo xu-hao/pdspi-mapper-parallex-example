@@ -9,7 +9,6 @@ WORKDIR /test
 COPY data.py /test/data.py
 COPY pdspi /test/pdspi
 COPY api /test/api
-COPY spec.py /test/api/spec.py
 COPY pdsphenotypemapping /test/pdsphenotypemapping
 COPY tx-utils/src /test
 COPY pdspi /test/pdspi
