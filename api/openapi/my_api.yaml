@@ -135,6 +135,7 @@ paths:
               required:
                 - pids
                 - timestamp
+                - settings
                 - data
               properties:
                 txid:
@@ -148,6 +149,8 @@ paths:
                   type: array
                   items:
                     type: string
+                settings_requested:
+                  $ref: "#/components/schemas/Settings"
                 timestamp:
                   type: string
                   format: date-time
