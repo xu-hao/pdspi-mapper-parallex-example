@@ -130,7 +130,7 @@ paths:
         content:
           application/json:
             schema:
-              description: "Send in FHIR bundle containing as much data as needed to map the values requested in 'variableTypes'. For example, to provide clinical guidance, the bundle should contain the entire patient record. To provide mappings for a study period, the record will only cover the duration of the study. To create a feature vector for a training set, the duration might be only 24 hours, and the mapper might be called repeatedly for the same patient across multiple days to create a standardized array."
+              description: "Send in FHIR bundle, (or array of bundles, one per patient id), containing as much data as needed to map the values requested in 'variableTypes'. For example, to provide clinical guidance, the bundle should contain the entire patient record. To provide mappings for a study period, the record will only cover the duration of the study. To create a feature vector for a training set, the duration might be only 24 hours, and the mapper might be called repeatedly for the same patient across multiple days to create a standardized array."
               type: object
               required:
                 - pids
@@ -143,6 +143,7 @@ paths:
                   type: integer
                   description: "Number of milliseconds until time out. Factory system default should be 120000 (2 minutes) for RUO applictions, and only 500ms for clinical."
                 pids:
+                  description: "Map these patient ids from the FHIR, if property is not present, map all patients."
                   example: [38]
                   type: array
                   items:
@@ -151,7 +152,10 @@ paths:
                   type: string
                   format: date-time
                 data:
-                  $ref: "#/components/schemas/Bundle"
+                  description: "A FHIR bundle (or array of bundles, one per patient id) of type 'batch-response'."
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Bundle"
                 variableTypes:
                   description: "If absent, all variables will be mapped and returned."
                   type: array
@@ -417,4 +421,5 @@ components:
           description: "If absent, all values are legal, so treat the value like a string. Use the JSON schema, https://json-schema.org/draft/2019-09/json-schema-validation.html. For example, { type: 'string', 'enum': [ 'Gentamicin', 'Amikacin' ] } to define an enumeration,  { 'type': 'number' } for a float, and { 'type': 'number', 'minimum': '0' } for a positive number, and { 'type': 'integer' } for an integer. Furthermore, a non-standard 'title' can be added in support of a human-readable string for the type's value. This maybe be implemented by the PDS to aid in debugging, however clients should not depend on this value. NOTE: This value is actually an object type, but we use 'string' here to overcome a shortcoming of the swagger ui. This design choice was made in order to prioritize a better interactive documentation experience for the API user."
           example: { "type": "string", "enum": [{"value": "urn://cdwh.nctracs.v1", "title": "NCTraCS Carolina Data Warehouse"},{"value": "http://hapi.fhir.org/baseR4"},{"value": "https://open-ic.epic.com/FHIR/api/FHIR/DSTU2"}] }
     Bundle:
+      description: "A FHIR-formatted bundle object, see FHIR spec for more details: https://www.hl7.org/fhir/valueset-bundle-type.html" 
       type: object
