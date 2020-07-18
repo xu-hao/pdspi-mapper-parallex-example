@@ -30,6 +30,10 @@ def key(a):
         return Just("authoredOn")
     elif "dispenseRequest" in a:
         return Just(["dispenseRequest", "validityPeriod", "start"])
+    elif "issued" in a:
+        return Just(["issued"])
+    elif "assertedDate" in a:
+        return Just(["assertedDate"])
     return Nothing
         
 
