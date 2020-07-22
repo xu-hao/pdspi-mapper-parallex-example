@@ -3,5 +3,5 @@ gunicorn[gevent]==19.9.0
 connexion[swagger-ui]
 python-dateutil==2.8.1
 tx-functional>=0.0.16
-tx-parallex>=0.0.43
+tx-parallex>=0.0.48
 pint

@@ -36,7 +36,7 @@ def mappingClinicalFromData(body):
         "pids": body["pids"],
         "timestamp": body["timestamp"],
         "fhir": body["data"]
-    })
+    }, validate_spec = False)
 
     ret = None
     for k,v in res.items():
