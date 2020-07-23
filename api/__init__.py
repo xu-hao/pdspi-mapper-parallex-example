@@ -2,9 +2,11 @@ import os
 import logging
 from pathlib import Path
 from tx.parallex import start_python
+from tx.functional.maybe import Just, Nothing
+from pathvalidate import validate_filename
 
 logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 number_of_workers = os.environ.get("PARALLEL_RUNS", 3)
 
@@ -25,10 +27,26 @@ def assign(array, keys, value):
         array[key] = assign(array[key], the_keys, value)
         return array
 
-    
-def mappingClinicalFromData(body):
-    spec_path = Path(__file__).parent / "config" / f"{body.get('specName', 'spec')}.py"
 
+def mappingClinicalFromData(body):
+    modelParameters = body["settings_requested"]["modelParameters"]
+    logger.info(f"modelParameters = {modelParameters}")
+    specNames = [modelParameter for modelParameter in modelParameters if modelParameter["id"] == "specName"]
+    if len(specNames) == 0:
+        specName = "spec.py"
+    else:
+        specName = specNames[0]["parameterValue"]
+        validate_filename(specName)
+    specNames = [modelParameter for modelParameter in modelParameters if modelParameter["id"] == "libraryPath"]
+    if len(specNames) == 0:
+        pythonLibrary = Nothing
+    else:
+        pythonLibrary = Just(specNames[0]["parameterValue"])
+        pythonLibrary.map(validate_filename)
+    
+    spec_path = Path(__file__).parent / "config" / f"{body.get('specName', 'spec')}.py"
+    lib_path = pythonLibrary.map(lambda pythonLibrary: str(Path(__file__).parent.parent / "config" / pythonLibrary)).rec(lambda x: [x], [])
+    
     with open(spec_path) as f:
         spec = f.read()
 
@@ -36,7 +54,7 @@ def mappingClinicalFromData(body):
         "pids": body["pids"],
         "timestamp": body["timestamp"],
         "fhir": body["data"]
-    }, validate_spec = False)
+    }, system_paths = lib_path, validate_spec = False)
 
     ret = None
     for k,v in res.items():

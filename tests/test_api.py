@@ -17,9 +17,9 @@ data_dir = Path(__file__).parent / "ptdata"
 
 log.info(f"looking for fhir at {data_dir}")
 
-resource_names = ["MedicationRequest", "Condition", "Observation"]
+resource_names = ["Patient", "MedicationRequest", "Condition", "Observation"]
 
-def query(pids, timestamp, spec_name=None):
+def query(pids, timestamp, spec_name=None, lib_name=None):
     fhir = get_entries(json_in_dir=data_dir, pids=pids, resource_names=resource_names)
 
     log.info(f"fhir = {fhir}")
@@ -27,6 +27,15 @@ def query(pids, timestamp, spec_name=None):
     return requests.post(f"http://pdspi-mapper-parallex-example:8080/mapping", headers=json_headers, json={
         "data": fhir,
         "pids": pids,
+        "settings_requested": {
+            "modelParameters": ([] if spec_name is None else [{
+                "id": "specName",
+                "parameterValue": spec_name
+            }]) + ([] if lib_name is None else [{
+                "id": "libraryPath",
+                "parameterValue": lib_name
+            }])
+        },
         "timestamp": timestamp,
         **({} if spec_name is None else {"specName": spec_name})
     })
@@ -64,6 +73,18 @@ def test_api_spec2():
                 
     assert result.json() == [{
         "outcome": False
+    }]
+
+def test_api_spec3():
+    timestamp = "2020-05-02T00:00:00Z"
+    pids = ["MickeyMouse"]
+
+    result = query(pids, timestamp, spec_name="spec3", lib_name="spec3")
+    log.info(result.content)
+    assert result.status_code == 200
+                
+    assert result.json() == [{
+        "outcome": [1]
     }]
 
     

@@ -30,10 +30,6 @@ def key(a):
         return Just("authoredOn")
     elif "dispenseRequest" in a:
         return Just(["dispenseRequest", "validityPeriod", "start"])
-    elif "issued" in a:
-        return Just(["issued"])
-    elif "assertedDate" in a:
-        return Just(["assertedDate"])
     return Nothing
         
 
@@ -286,17 +282,53 @@ def filter_records_interval(records, start, end):
 
 
 def get_observation(patient_id, fhir):
-    return unbundle(fhir[patient_id]["Observation"])
-#    return records.map(lambda xs : list(filter (lambda x : x["resourceType"] == "Observation", xs)))
+    return get_resource("Observation", patient_id, fhir)
 
 
 def get_condition(patient_id, fhir):
-    return unbundle(fhir[patient_id]["Condition"])
-#    return records.map(lambda xs : list(filter (lambda x : x["resourceType"] == "Condition", xs)))
+    return get_resource("Condition", patient_id, fhir)
 
+
+def get_patient_batch_response(patient_id, fhir):
+    for bundle in fhir:
+        mentries = unbundle(bundle)
+        if isinstance(mentries, Left):
+            return mentries
+        else:
+            for entry in mentries.value:
+                if entry["resourceType"] == "Patient" and entry["id"] == patient_id:
+                    return Right(bundle)
+    return Left("No Bundle resource found")
+
+
+def either_to_maybe(e):
+    e.rec(lambda _: Nothing, identity)
+
+    
+def get_resource(resource_type, patient_id, fhir):
+    def handle_patient_batch_response(batch_response_entries):
+        if resource_type == "Patient":
+            for entry in batch_response_entries:
+                if entry["resourceType"] == "Patient":
+                    return Right(entry)
+            return Left("No Patient resource found")
+        else:
+            for entry in batch_response_entries:
+                if entry["resourceType"] == "Bundle":
+                    mresources = unbundle(entry)
+                    if isinstance(mresources, Left):
+                        return mresources
+                    else:
+                        resources = mresources.value
+                        if len(resources) > 0 and resources[0]["resourceType"] == resource_type:
+                            return mresources
+            return Right([])
+    
+    return get_patient_batch_response(patient_id, fhir).bind(unbundle).bind(handle_patient_batch_response)
+        
 
 def get_condition_icd_code(patient_id, fhir):
-    records = unbundle(fhir[patient_id]['Condition']).value
+    records = unbundle(fhir['Condition']).value
     icd_codes = []
     icd_10_url = 'http://hl7.org/fhir/sid/icd-10-cm'
     icd_9_url = 'http://hl7.org/fhir/sid/icd-9-cm'
@@ -311,8 +343,7 @@ def get_condition_icd_code(patient_id, fhir):
 
 
 def get_medication_request(patient_id, fhir):
-    return unbundle(fhir[patient_id]["MedicationRequest"])
-#    return records.map(lambda xs : list(filter (lambda x : x["resourceType"] == "Condition", xs)))
+    return get_resource("MedicationRequest", patient_id, fhir)
 
 
 def one(xs):
@@ -331,8 +362,8 @@ def one(xs):
 
     
 def get_patient(patient_id, fhir):
-    return unbundle(fhir[patient_id]["Patient"]).bind(one)
-#    return records.bind(lambda xs : one(list(filter (lambda x : x["resourceType"] == "Patient", xs))))
+    return get_resource("Patient", patient_id, fhir)
+
 
 def height(records, unit, timestamp):
     return query_records_closest(records, [

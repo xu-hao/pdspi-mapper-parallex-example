@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: tests/Dockerfile
-    command: ["-s", "-vv", "-x"] # , "-k", "test_run"]
+    command: ["-s", "-vv", "-x"] # , "-k", "test_api_spec3"]
     depends_on:
       - pdspi-mapper-parallex-example
 
