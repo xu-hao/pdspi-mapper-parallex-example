@@ -26,8 +26,8 @@ def query(pids, timestamp, spec_name=None, lib_name=None):
 
     return requests.post(f"http://pdspi-mapper-parallex-example:8080/mapping", headers=json_headers, json={
         "data": fhir,
-        "pids": pids,
-        "settings_requested": {
+        "patientIds": pids,
+        "settingsRequested": {
             "modelParameters": ([] if spec_name is None else [{
                 "id": "specName",
                 "parameterValue": spec_name
@@ -36,8 +36,19 @@ def query(pids, timestamp, spec_name=None, lib_name=None):
                 "parameterValue": lib_name
             }])
         },
-        "timestamp": timestamp,
-        **({} if spec_name is None else {"specName": spec_name})
+        "timestamp": timestamp
+    })
+
+
+def query2(pids, timestamp):
+    fhir = get_entries(json_in_dir=data_dir, pids=pids, resource_names=resource_names)
+
+    log.info(f"fhir = {fhir}")
+
+    return requests.post(f"http://pdspi-mapper-parallex-example:8080/mapping", headers=json_headers, json={
+        "data": fhir,
+        "patientIds": pids,
+        "timestamp": timestamp
     })
 
 
@@ -67,7 +78,7 @@ def test_api_spec2():
     timestamp = "2020-05-02T00:00:00Z"
     pids = ["MickeyMouse"]
 
-    result = query(pids, timestamp, spec_name="spec2")
+    result = query(pids, timestamp, spec_name="spec2.py")
     log.info(result.content)
     assert result.status_code == 200
                 
@@ -79,12 +90,34 @@ def test_api_spec3():
     timestamp = "2020-05-02T00:00:00Z"
     pids = ["MickeyMouse"]
 
-    result = query(pids, timestamp, spec_name="spec3", lib_name="spec3")
+    result = query(pids, timestamp, spec_name="spec3.py", lib_name="spec3")
     log.info(result.content)
     assert result.status_code == 200
                 
     assert result.json() == [{
         "outcome": [1]
+    }]
+
+def test_api_spec4():
+    timestamp = "2020-05-02T00:00:00Z"
+    pids = ["MickeyMouse"]
+
+    result = query2(pids, timestamp)
+    log.info(result.content)
+    assert result.status_code == 200
+                
+    assert result.json() == [{
+        "bmi_after": {
+            "variableValue": {
+                "value": None
+            }
+        },
+        "bmi_before": {
+            "variableValue": {
+                "value": None
+            }
+        },
+        "outcome": False
     }]
 
     

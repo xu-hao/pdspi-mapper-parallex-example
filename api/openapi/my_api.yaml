@@ -133,9 +133,8 @@ paths:
               description: "Send in FHIR bundle, (or array of bundles, one per patient id), containing as much data as needed to map the values requested in 'variableTypes'. For example, to provide clinical guidance, the bundle should contain the entire patient record. To provide mappings for a study period, the record will only cover the duration of the study. To create a feature vector for a training set, the duration might be only 24 hours, and the mapper might be called repeatedly for the same patient across multiple days to create a standardized array."
               type: object
               required:
-                - pids
+                - patientIds
                 - timestamp
-                - settings_requested
                 - data
               properties:
                 txid:
@@ -143,13 +142,13 @@ paths:
                 timeout:
                   type: integer
                   description: "Number of milliseconds until time out. Factory system default should be 120000 (2 minutes) for RUO applictions, and only 500ms for clinical."
-                pids:
+                pateintIds:
                   description: "Map these patient ids from the FHIR, if property is not present, map all patients."
                   example: [38]
                   type: array
                   items:
                     type: string
-                settings_requested:
+                settingsRequested:
                   $ref: "#/components/schemas/Settings"
                 timestamp:
                   type: string
