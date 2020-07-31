@@ -30,10 +30,10 @@ def query(pids, timestamp, spec_name=None, lib_name=None):
         "settingsRequested": {
             "modelParameters": ([] if spec_name is None else [{
                 "id": "specName",
-                "parameterValue": spec_name
+                "parameterValue": {"value": spec_name}
             }]) + ([] if lib_name is None else [{
                 "id": "libraryPath",
-                "parameterValue": lib_name
+                "parameterValue": {"value": lib_name}
             }])
         },
         "timestamp": timestamp
@@ -118,6 +118,36 @@ def test_api_spec4():
             }
         },
         "outcome": False
+    }]
+
+def test_api_spec5():
+    timestamp = "2020-05-02T00:00:00Z"
+    pids = ["MickeyMouse"]
+
+    result = query(pids, timestamp, spec_name="spec4.py")
+    log.info(result.content)
+    assert result.status_code == 200
+                
+    assert result.json() == [{
+        "patientId": "MickeyMouse",
+        "values": [
+            {
+                "id": "outcome",
+                "variableValue": {
+                    "value": False
+                }
+            }, {
+                "id": "bmi_before",
+                "variableValue": {
+                    "value": None
+                }
+            }, {
+                "id": "bmi_after",
+                "variableValue": {
+                    "value": None
+                }
+            }
+        ]
     }]
 
     

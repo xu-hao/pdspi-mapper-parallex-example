@@ -36,13 +36,13 @@ def mappingClinicalFromData(body):
     if len(specNames) == 0:
         specName = "spec.py"
     else:
-        specName = specNames[0]["parameterValue"]
+        specName = specNames[0]["parameterValue"]["value"]
         validate_filename(specName)
     specNames = [modelParameter for modelParameter in modelParameters if modelParameter["id"] == "libraryPath"]
     if len(specNames) == 0:
         pythonLibrary = Nothing
     else:
-        pythonLibrary = Just(specNames[0]["parameterValue"])
+        pythonLibrary = Just(specNames[0]["parameterValue"]["value"])
         pythonLibrary.map(validate_filename)
     
     spec_path = Path(__file__).parent / "config" / specName
@@ -58,7 +58,7 @@ def mappingClinicalFromData(body):
         "pids": body["patientIds"],
         "timestamp": body["timestamp"],
         "fhir": body["data"]
-    }, system_paths = lib_path, validate_spec = False)
+    }, output_path = None, system_paths = lib_path, validate_spec = False)
 
     ret = None
     for k,v in res.items():
