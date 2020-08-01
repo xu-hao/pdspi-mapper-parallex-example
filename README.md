@@ -24,15 +24,7 @@ use `query_records_closest` to get records closest to date;
 
 look at extant function for examples you can reuse
 
-if you want to run individually:
-```
-fish: env PYTHONPATH=tx-utils/src python cli.py spec.py data.yaml 3
-bash: PYTHONPATH=tx-utils/src python cli.py spec.py data.yaml 3
-```
-```
-fish: env PYTHONPATH="tx-utils/src:." pytest
-bash: PYTHONPATH="tx-utils/src:." pytest
-```
+
 
 # cli tools
 
