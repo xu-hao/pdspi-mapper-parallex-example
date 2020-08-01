@@ -35,7 +35,7 @@ def get_patient_resource_entry_array(json_in_dir, pid : str, resource_name):
         else:
             return None
     else:
-        return bundle(rescs_filtered)
+        return bundle(rescs_filtered, "searchset")
 
 
 def get_entries(json_in_dir, pids : List[str], resource_names):
