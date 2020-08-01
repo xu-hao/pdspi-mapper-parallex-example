@@ -4,7 +4,12 @@ import sys
 import yaml
 import requests
 
-specName, libraryPath, dataFile, nthreads, resourceTypesFile, patientIdsFile, timestamp, fhirPort, mapperPort = sys.argv[1:]
+specName, libraryPathStr, dataFile, nthreads, resourceTypesFile, patientIdsFile, timestamp, fhirPort, mapperPort = sys.argv[1:]
+
+if libraryPathStr is None:
+    libraryPath = None
+else:
+    libraryPath = libraryPathStr
 
 nthreadsint = int(nthreads)
 
