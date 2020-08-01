@@ -62,8 +62,8 @@ def mappingClinicalFromData(body):
 
     ret = None
     for k,v in res.items():
-        *indices, key = k.split(".")
-        ret = assign(ret, list(map(int, indices)) + [key], v.value)
+        indices = [] if k == "" else k.split(".")
+        ret = assign(ret, list(map(int, indices)), v.value)
     
     return ret
         

@@ -3,6 +3,6 @@ gunicorn[gevent]==19.9.0
 connexion[swagger-ui]
 python-dateutil==2.8.1
 tx-functional>=0.0.16
-tx-parallex>=0.0.60
+tx-parallex>=0.0.62
 pint
 pathvalidate>=2.2.2
