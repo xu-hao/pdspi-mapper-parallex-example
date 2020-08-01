@@ -34,10 +34,10 @@ resp = requests.post(f"http://localhost:{mapperPort}/mapping", json={
         "modelParameters": [{
             "id": "specName",
             "parameterValue": {"value": specName}
-        }, **({} if libraryPath == "" else {
+        }] + ([] if libraryPath == "" else [{
             "id": "libraryPath",
             "parameterValue": {"value": libraryPath}
-        })]
+        }])
     },
     "patientIds": patientIds,
     "timestamp": timestamp
