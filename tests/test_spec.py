@@ -47,8 +47,8 @@ def test_DOAC2():
 
 def test_run():
     ret = run_python(3, "spec.py", "data.yaml")
-    keys = {''}
-    assert keys == ret.keys()
+    keys = {"0"}
+    assert keys == set(ret.keys())
     for key in ret.keys():
         assert isinstance(ret[key], Right)
 
