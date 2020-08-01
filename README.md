@@ -35,8 +35,10 @@ look at extant function for examples you can reuse
 ## api
 `modelParameters`
 
-`specName`: spec name
-`libraryPath`: library path
+`specName`: spec name file name relative to the `config`
+
+`libraryPath`: library path relative to the `config` dir
+
 # cli tools
 
 To use the cli tools, put your spec under `config`. Put your custom python functions under a sub dir in that dir. There is a `cli.py`. You can run it as
