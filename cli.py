@@ -4,7 +4,7 @@ import sys
 import yaml
 import requests
 
-specName, libraryPath, dataFile, nthreads, resourceTypesFile, patientIdsFile, timestamp, fhirPort, mapperPort = sys.argv[1:]
+specName, libraryPath, nthreads, resourceTypesFile, patientIdsFile, timestamp, fhirPort, mapperPort = sys.argv[1:]
 
 nthreadsint = int(nthreads)
 
@@ -13,9 +13,6 @@ with open(patientIdsFile) as f:
 
 with open(resourceTypesFile) as f:
     resourceTypes = yaml.safe_load(f)
-
-with open(dataFile) as f:
-    data = yaml.safe_load(f)
 
 json_headers = {
     "Content-Type": "application/json",
