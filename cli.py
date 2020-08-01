@@ -4,12 +4,7 @@ import sys
 import yaml
 import requests
 
-specName, libraryPathStr, dataFile, nthreads, resourceTypesFile, patientIdsFile, timestamp, fhirPort, mapperPort = sys.argv[1:]
-
-if libraryPathStr is None:
-    libraryPath = None
-else:
-    libraryPath = libraryPathStr
+specName, libraryPath, dataFile, nthreads, resourceTypesFile, patientIdsFile, timestamp, fhirPort, mapperPort = sys.argv[1:]
 
 nthreadsint = int(nthreads)
 
@@ -35,21 +30,24 @@ fhir = resp.json()
 
 resp = requests.post(f"http://localhost:{mapperPort}/mapping", json={
     "data": fhir,
-    "settingsRequested": [{
+    "settingsRequested": {
         "modelParameters": [{
             "id": "specName",
             "parameterValue": {"value": specName}
-        }, {
+        }, **({} if libraryPath == "" else {
             "id": "libraryPath",
             "parameterValue": {"value": libraryPath}
-        }]
-    }],
+        })]
+    },
     "patientIds": patientIds,
     "timestamp": timestamp
 }, headers=json_headers)
 
-ret = resp.json()
+if ret.status_code == 200:
+    ret = resp.json()
 
-pp = pprint.PrettyPrinter(indent=4)
-pp.pprint({k: v.value for k,v in ret.items()})
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint({k: v.value for k,v in ret.items()})
+else:
+    print(resp.text)
 
