@@ -1,22 +1,24 @@
 [![Build Status](https://travis-ci.com/RENCI/pdspi-mapper-parallex-example.svg?branch=master)](https://travis-ci.com/RENCI/pdspi-mapper-parallex-example)
 
-# setting up env
+# pdspi-mapper-parallex-example
+
+require python 3.8 or higher
+
+## setting up env
 
 edit `tests/docker.env`
 
-# start
+## start
 ```
 ./up.sh
 ```
-# stop
+
+## stop
 ```
 ./down.sh
 ```
 
 
-# pdspi-mapper-parallex-example
-
-require python 3.8 or higher
 
 ```
 pip install -r requirements.txt
