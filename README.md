@@ -8,7 +8,8 @@ require python 3.8 or higher
 
 edit `tests/docker.env`
 
-To use the cli tools, put your spec under `config`. Put your custom python functions under a sub dir in that dir.
+Put your spec under `config`. Put your custom python functions under a sub dir in that dir. Any python module under the sub dir can be imported in your spec. Your spec should output the format that the api specifies.
+
 
 use `query_records_closest_before` to get records closest before date; 
 
