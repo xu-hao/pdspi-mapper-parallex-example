@@ -10,7 +10,7 @@ edit `tests/docker.env`
 
 Put your spec under `config`. Put your custom python functions under a sub dir in that dir. Any python module under the sub dir can be imported in your spec. Your spec should output the format that the api specifies.
 
-## utility functions for building python functions
+## utility functions for building python functions that can be used to build the spec
 
 use `query_records_closest_before` to get records closest before date; 
 
