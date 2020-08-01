@@ -45,7 +45,7 @@ def mappingClinicalFromData(body):
         pythonLibrary = Just(specNames[0]["parameterValue"]["value"])
         pythonLibrary.map(validate_filename)
     
-    spec_path = Path(__file__).parent / "config" / specName
+    spec_path = Path(__file__).parent.parent / "config" / specName
     lib_path = pythonLibrary.map(lambda pythonLibrary: str(Path(__file__).parent.parent / "config" / pythonLibrary)).rec(lambda x: [x], [])
     logger.info(f"spec_path = {spec_path}")
     

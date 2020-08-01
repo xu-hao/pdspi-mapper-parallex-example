@@ -8,6 +8,6 @@ services:
     ports:
       - $API_PORT:8080
     volumes:
-      - ./config:/usr/src/app/api/config
+      - ./config:/usr/src/app/config
 
     
