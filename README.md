@@ -2,7 +2,8 @@
 
 # pdspi-mapper-parallex-example
 
-require python 3.8 or higher
+## prerequisites
+ python 3.8 or higher
 
 ## configuration
 
