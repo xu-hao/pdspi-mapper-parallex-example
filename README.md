@@ -35,7 +35,7 @@ look at extant function for examples you can reuse
 ## api
 `modelParameters`
 
-`specName`: spec name file name relative to the `config`
+`specName`: spec name is a file name relative to the `config`
 
 `libraryPath`: library path relative to the `config` dir
 
