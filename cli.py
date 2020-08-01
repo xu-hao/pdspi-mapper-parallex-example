@@ -47,7 +47,7 @@ if resp.status_code == 200:
     ret = resp.json()
 
     pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint({k: v.value for k,v in ret.items()})
+    pp.pprint(ret)
 else:
     print(resp.text)
 
