@@ -43,7 +43,7 @@ def calculation(codes):
 def calculation_template(clinical_variable, resource_name, timestamp_range, record, to_unit):
     if resource_name == "MedicationRequest":
         code_path = "medication.medicationCodeableConcept"
-        rcode = record["medication"]["medicationCodeableConcept"]
+        rcode = record.get("medication", record)["medicationCodeableConcept"]
     else:
         code_path = "code.coding"
         rcode = record["code"]
@@ -133,7 +133,7 @@ def filter_records(records, codes, resource_name):
             is_regex = c["is_regex"]
 
             if resource_name == "MedicationRequest":
-                code2 = record.get("medication", {}).get("medicationCodeableConcept")
+                code2 = record.get("medication", record).get("medicationCodeableConcept")
             else:
                 code2 = record.get("code")
                 
