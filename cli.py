@@ -43,7 +43,7 @@ resp = requests.post(f"http://localhost:{mapperPort}/mapping", json={
     "timestamp": timestamp
 }, headers=json_headers)
 
-if ret.status_code == 200:
+if resp.status_code == 200:
     ret = resp.json()
 
     pp = pprint.PrettyPrinter(indent=4)
