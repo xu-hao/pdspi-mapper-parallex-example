@@ -8,8 +8,8 @@ x = 10
 y = 10
 study_start = "2010-01-01T00:00:00Z"
 study_end = "2011-01-01T00:00:00Z"
-for pid in pids:
-    medication_request = get_medication_request(patient_id=pid, fhir=fhir)
+for pid in patientIds:
+    medication_request = get_medication_request(patient_id=pid, fhir=data)
     start = strtodate(study_start)
     end = strtodate(study_end)
     intervention = DOAC2(start=start, end=end, records=medication_request)
@@ -18,8 +18,8 @@ for pid in pids:
     ydelta = relativedelta(months=y)
     window_start = intervention_date_first - xdelta
     window_end = intervention_date_first + ydelta
-    condition = get_condition(patient_id=pid, fhir=fhir)
-    observation = get_observation(patient_id=pid, fhir=fhir)
+    condition = get_condition(patient_id=pid, fhir=data)
+    observation = get_observation(patient_id=pid, fhir=data)
     height_before = height2(unit=height_unit, start=window_start, end=intervention_date_first, records=observation)
     weight_before = weight2(unit=weight_unit, start=window_start, end=intervention_date_first, records=observation)
     height_before_average = average(start=window_start, end=intervention_date_first, values=height_before)

@@ -55,9 +55,9 @@ def mappingClinicalFromData(body):
     logger.info(f"spec = {spec}")
 
     res = start_python(number_of_workers, py = spec, data = {
-        "pids": body["patientIds"],
+        "patientIds": body["patientIds"],
         "timestamp": body["timestamp"],
-        "fhir": body["data"]
+        "data": body["data"]
     }, output_path = None, system_paths = lib_path, validate_spec = False)
 
     ret = None
