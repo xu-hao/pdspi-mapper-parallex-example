@@ -4,7 +4,7 @@ from clinical import *
 study_start = "2010-01-01T00:00:00Z"
 study_end = "2011-01-01T00:00:00Z"
 
-for pid in ["MickeyMouse", "MickeyMouse"]:
+for pid in patientIds:
   with Seq:
     med_request = get_medication_request(patient_id=pid, fhir=data)
     start = strtodate(study_start)

@@ -6,7 +6,7 @@ logger = getLogger(__name__, "INFO")
 
 def big_compute(a, b, c):
     t = t2 = time.time()
-    while t2 - t < 10:
+    while t2 - t < 60:
         t2 = time.time()
     return t, t2
 
