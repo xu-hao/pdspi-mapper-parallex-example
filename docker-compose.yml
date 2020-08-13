@@ -5,6 +5,8 @@ services:
     build:
       context: .
     restart: always
+#   environment:
+#       LOG_LEVEL: DEBUG
     ports:
       - $API_PORT:8080
     volumes:
