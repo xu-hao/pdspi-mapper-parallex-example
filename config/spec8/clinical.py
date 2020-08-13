@@ -4,7 +4,7 @@ from tx.readable_log import getLogger, format_message
 logger = getLogger(__name__, "INFO")
 
 
-def big_compute(a):
+def big_compute(a, b, c):
     t = t2 = time.time()
     while t2 - t < 10:
         t2 = time.time()
