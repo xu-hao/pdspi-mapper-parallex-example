@@ -84,7 +84,7 @@ def mappingClinicalFromData(body):
     ret = None
     for k,v in res.items():
         indices = [] if k == "" else k.split(".")
-        ret = assign(ret, list(map(int, indices)), v.value)
+        ret = assign(ret, list(map(lambda index: int(index) if index.isdigit() else index, indices)), v.value)
 
     return json.loads(json.dumps(ret))
         
