@@ -5,6 +5,7 @@ from tx.parallex import start_python
 from tx.functional.maybe import Just, Nothing
 from pathvalidate import validate_filename
 import yappi
+import json
 
 yappi.set_clock_type(os.environ.get("CLOCK_TYPE", "wall"))
 
@@ -84,8 +85,8 @@ def mappingClinicalFromData(body):
     for k,v in res.items():
         indices = [] if k == "" else k.split(".")
         ret = assign(ret, list(map(int, indices)), v.value)
-    
-    return ret
+
+    return json.loads(json.dumps(ret))
         
 
 config = {
