@@ -19,14 +19,25 @@ def assign(array, keys, value):
         key, *the_keys = keys
         if array is None:
             array = []
-        if isinstance(array, list):
-            if len(array) <= key:
-                array = array + [{}] * (key + 1 - len(array))
+
+        if isinstance(key, int):
+            if isinstance(array, list):
+                if len(array) <= key:
+                    array = array + [{}] * (key + 1 - len(array))
+            else:
+                if key not in array:
+                    array[key] = {}
         else:
+            if isinstance(array, list):
+                obj = {}
+                for i, elem in enumerate(array):
+                    obj[i] = elem
+                array = obj
             if key not in array:
                 array[key] = {}
-
+                
         array[key] = assign(array[key], the_keys, value)
+        
         return array
 
 
