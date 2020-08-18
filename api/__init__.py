@@ -42,7 +42,9 @@ def assign(array, keys, value):
 
 
 def mappingClinicalFromData(body):
-    modelParameters = body.get("settingsRequested", {}).get("modelParameters", [])
+    settingRequested = body.get("settingsRequested", {})
+    modelParameters = settingRequested.get("modelParameters", [])
+    patientVariables = settingsRequested.get("patientVariables", [])
     logger.info(f"modelParameters = {modelParameters}")
     specNames = [modelParameter for modelParameter in modelParameters if modelParameter["id"] == "specName"]
     logger.info(f"specNames = {specNames}")
@@ -82,6 +84,7 @@ def mappingClinicalFromData(body):
 
     res = start_python(nthreads, py = spec, data = {
         "patientIds": body["patientIds"],
+        "patientVariables": patientVariables
         "timestamp": body["timestamp"],
         "data": body["data"]
     }, output_path = None, system_paths = lib_path, validate_spec = False, level=level)
