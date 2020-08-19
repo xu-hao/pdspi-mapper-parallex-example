@@ -12,4 +12,11 @@ services:
     volumes:
       - ./config:/usr/src/app/config
 
+networks:                      
+  default:                     
+    driver: bridge             
+    ipam:                      
+      driver: default          
+      config:                  
+        - subnet: 172.18.1.0/24
     

@@ -1,4 +1,4 @@
-from functools import reduce
+from functools import reduce, partial
 from tx.fhir.utils import unbundle
 from tx.dateutils.utils import tstostr, strtots, strtodate
 from datetime import datetime, date, timezone
@@ -285,10 +285,18 @@ def get_observation(patient_id, fhir):
     return get_resource("Observation", patient_id, fhir)
 
 
+def get_observation_patient(fhir):                  
+    return get_resource_patient("Observation", fhir)
+                                                    
+                                                    
 def get_condition(patient_id, fhir):
     return get_resource("Condition", patient_id, fhir)
 
 
+def get_condition_patient(fhir):                  
+    return get_resource_patient("Condition", fhir)
+                                                  
+                                                  
 def get_patient_batch_response(patient_id, fhir):
     for bundle in fhir:
         mentries = unbundle(bundle)
@@ -306,6 +314,10 @@ def either_to_maybe(e):
 
     
 def get_resource(resource_type, patient_id, fhir):
+    return get_patient_batch_response(patient_id, fhir).bind(partial(get_resource_patient, resource_type))
+                                                                                                          
+                                                                                                          
+def get_resource_patient(resource_type, fhir):                                                            
     def handle_patient_batch_response(batch_response_entries):
         if resource_type == "Patient":
             for entry in batch_response_entries:
@@ -324,7 +336,7 @@ def get_resource(resource_type, patient_id, fhir):
                             return mresources
             return Right([])
     
-    return get_patient_batch_response(patient_id, fhir).bind(unbundle).bind(handle_patient_batch_response)
+    return unbundle(fhir).bind(handle_patient_batch_response)
         
 
 def get_condition_icd_code(patient_id, fhir):
@@ -346,6 +358,10 @@ def get_medication_request(patient_id, fhir):
     return get_resource("MedicationRequest", patient_id, fhir)
 
 
+def get_medication_request_patient(fhir):                 
+    return get_resource_patient("MedicationRequest", fhir)
+                                                          
+                                                          
 def one(xs):
     if len(xs) == 1:
         return Right(xs[0])
@@ -363,6 +379,10 @@ def one(xs):
     
 def get_patient(patient_id, fhir):
     return get_resource("Patient", patient_id, fhir)
+
+
+def get_patient_patient(fhir):                  
+    return get_resource_patient("Patient", fhir)
 
 
 def height(records, unit, timestamp):
