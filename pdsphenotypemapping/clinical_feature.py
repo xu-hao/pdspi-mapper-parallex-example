@@ -126,7 +126,7 @@ def calculation_template(clinical_variable, resource_name, timestamp_range, reco
 def filter_records(records, codes, resource_name):
     records_filtered = []
     for record in records:
-        logger.info(f"filtering record: {record}")
+        logger.debug(f"filtering record: {record}")
         for c in codes:  
             system = c["system"]
             code = c["code"]
