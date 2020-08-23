@@ -11,7 +11,7 @@ return {
         }, {
             "id": "bmi_after",
             "title": "bmi after",
-            "legalValues": {"type": "numberboolean"}
+            "legalValues": {"type": "number"}
         }, {
             "id": "outcome",
             "title": "outcome",
