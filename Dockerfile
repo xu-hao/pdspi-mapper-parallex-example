@@ -16,5 +16,5 @@ COPY tx-utils/src /usr/src/app
 
 ENTRYPOINT ["gunicorn"]
 
-CMD ["-w", "4", "-b", "0.0.0.0:8080", "api.server:create_app()", "-t", "3600"]
+CMD ["-w", "4", "-b", "0.0.0.0:8080", "api.server:create_app()", "-t", "100000"]
 
