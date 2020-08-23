@@ -54,7 +54,7 @@ def getModelParameter(modelParameters, modelParameterId, proc, default):
 
 
 def mappingClinicalFromData(body):
-    config = get_config()
+    config = get_default_config()
     settingsRequested = body.get("settingsRequested", {})
     settingsDefault = config.get("settingsDefault", {})
     modelParameters = settingsRequested.get("modelParameters", [])
@@ -107,7 +107,8 @@ def mappingClinicalFromData(body):
     return json.loads(json.dumps(ret))
         
 
-def get_config():
+def get_default_config():
+    
     settingsDefault = None if config_url is None else requests.get(config_url).json().get("settingsDefaults", None)
 
     return {
@@ -121,3 +122,12 @@ def get_config():
     }
 
 
+def get_config():
+    spec_path = Path(__file__).parent.parent / "config" / "config.py"
+    
+    with open(spec_path) as f:
+        spec = f.read()
+
+    res = start_python(nthreads, py = spec, data = {}, output_path = None, system_paths = None, validate_spec = False, level=level, object_store=None)
+
+    return res[""]
