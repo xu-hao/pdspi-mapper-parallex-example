@@ -110,7 +110,7 @@ def mappingClinicalFromData(body):
 
 def get_default_config():
 
-    obj = requests.get(config_url)
+    obj = get(config_url)
     if isinstance(obj, Left):
         return objl.value
 
