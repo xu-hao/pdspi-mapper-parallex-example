@@ -56,7 +56,7 @@ def getModelParameter(modelParameters, modelParameterId, proc, default):
 
 
 def mappingClinicalFromData(body):
-    config = get_default_config()
+    config = get_default_config(get_config())
     settingsRequested = body.get("settingsRequested", {})
     settingsDefault = config.get("settingsDefault", {})
     modelParameters = settingsRequested.get("modelParameters", [])
@@ -109,8 +109,10 @@ def mappingClinicalFromData(body):
     return json.loads(json.dumps(ret))
         
 
-def get_default_config():
+def get_default_config(default):
 
+    if config_url is None:
+        return default
     obj = get(config_url)
     if isinstance(obj, Left):
         return objl.value
