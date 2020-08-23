@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 from tx.parallex import start_python
 from tx.functional.maybe import Just, Nothing
+from tx.functional.either import Left
 from tx.functional.utils import identity
 from pathvalidate import validate_filename
 from tx.requests.utils import get
