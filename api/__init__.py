@@ -128,6 +128,6 @@ def get_config():
     with open(spec_path) as f:
         spec = f.read()
 
-    res = start_python(1, py=spec, data={}, output_path=None, system_paths=None, validate_spec=False, level=0, object_store=None)
+    res = start_python(1, py=spec, data={}, output_path=None, system_paths=[], validate_spec=False, level=0, object_store=None)
 
     return res[""]
