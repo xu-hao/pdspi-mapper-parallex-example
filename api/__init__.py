@@ -5,6 +5,7 @@ from tx.parallex import start_python
 from tx.functional.maybe import Just, Nothing
 from tx.functional.utils import identity
 from pathvalidate import validate_filename
+from tx.requests.utils import get
 import yappi
 import json
 
@@ -108,18 +109,23 @@ def mappingClinicalFromData(body):
         
 
 def get_default_config():
-    
-    settingsDefault = None if config_url is None else requests.get(config_url).json().get("settingsDefaults", None)
 
-    return {
-        "title": "pds parallex mapper",
-        'piid': "pdspi-mapper-parallex-example",
-        "pluginType": "m",
-        **({
-            "settingsDefaults": settingsDefault,
-        } if settingsDefault is not None else {}),
-        "pluginTypeTitle": "Mapping"
-    }
+    obj = requests.get(config_url)
+    if isinstance(obj, Left):
+        return objl.value
+
+    else:
+        settingsDefault = None if config_url is None else obj.value.get("settingsDefaults", None)
+
+        return {
+            "title": "pds parallex mapper",
+            'piid': "pdspi-mapper-parallex-example",
+            "pluginType": "m",
+            **({
+                "settingsDefaults": settingsDefault,
+            } if settingsDefault is not None else {}),
+            "pluginTypeTitle": "Mapping"
+        }
 
 
 def get_config():
