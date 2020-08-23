@@ -122,6 +122,118 @@ paths:
                       } ]
                   configs:
                     $ref: '#/components/schemas/Config'
+  /default_config:
+    get:
+      summary: returns the config for the plugin
+      operationId: api.get_default_config
+      responses:
+        '200':
+          description: config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Config'
+              example:
+                {
+                    "title": "DOAC variable mapper",
+                    "piid": "pdspi-mapper-DOAC",
+                    "pluginType": "m",
+                    "settingsDefaults": {
+                      "pluginSelectors": [ {
+                          "title": "FHIR URI - an URL (locator) or an URN (unique name)",
+                          "selectorValue": {
+                              "value": "http://hapi.fhir.org/baseR4",
+                              "title": "Happy FHIR base url" }
+                        }
+                      ],
+                      "modelParameters": [ 
+                        {
+                          "id": "current-time",
+                          "parameterDescription": "Compute variables relevant to this timestamp.",
+                          "parameterValue": { "value": "2019-09-20T00:00:01Z" },
+                          "legalValues": { "type": "string", "format": "time-stamp" }
+                        }
+                      ],
+                      "patientVariables": [
+                        {
+                          "id": "LOINC:30525-0",
+                          "title": "Age",
+                          "variableDescription": "Fractional age of patient relative to [current-time].",
+                          "legalValues": { "type": "number", "minimum": "0" },
+                        },
+                        {
+                          "id": "1114195.extant",
+                          "title": "Rivoroxaban, extant",
+                          "variableDescription": "Dosing of rivoroxaban, based on the finding of any rxnorm codes found on the record that map to rxCUI 1114195.",
+                          "legalValues": { "type": "number" } 
+                        },
+                        {
+                          "id": "1114195.intensity",
+                          "title": "Rivoroxaban, dosage",
+                          "variableDescription": "Dosing of rivoroxaban.",
+                          "legalValues": { "type": "number", "minimum": 0  } 
+                        },
+                        {
+                          "id": "HP:0001892.extant.days",
+                          "title": "Bleeding, days since",
+                          "variableDescription": "Days since the last bleeding event, relative to current-time. A value < -age means never. Bleeding events are identified by one of 50 ICD10 codes or 42 ICD9 codes.",
+                          "legalValues": { "type": "number" } 
+                        },
+                        {
+                          "id": "HP:0000077.extant.boolean",
+                          "title": "Kidney dysfunction, extant",
+                          "variableDescription": "If true, then Kidney dysfunction was found in the record for the patient, relative to current-time.",
+                          "legalValues": { "type": "boolean" },
+                        },
+                        {
+                          "id": "1114195.extant.count",
+                          "title": "Rivoroxaban dosing count",
+                          "variableDescription": "Number of times patient was dosed with Rivoroxaban.",
+                          "legalValues": { "type": "number" } 
+                        },
+                      ]
+                    }
+                }
+        '400':
+          description: "Bad Request"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+                    example: [  {
+                      "timestamp": "2019-09-20T00:00:01Z",
+                      "event": "Unknown query parameters",
+                      "source": "client",
+                      "level": 4,
+                      "action": "Ignoring query parameters"
+                      } ]
+                  config:
+                    $ref: '#/components/schemas/Config'
+        '500':
+          description: "Internal Server Error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+                    example: [  {
+                      "timestamp": "2019-09-20T00:00:01Z",
+                      "event": "Not a mapper plugin type, [g] for [pdspi-mapper-example].",
+                      "source": "admin user",
+                      "level": 1,
+                      "action": "Changed plugin from [g] type to 'm'[pdspi-mapper-example] and returning config as-is otherwise"
+                      } ]
+                  configs:
+                    $ref: '#/components/schemas/Config'
   /mapping:
     post:
       summary: map from patient record to clinical feature variables
