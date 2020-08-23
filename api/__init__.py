@@ -130,4 +130,4 @@ def get_config():
 
     res = start_python(1, py=spec, data={}, output_path=None, system_paths=[], validate_spec=False, level=0, object_store=None)
 
-    return res[""]
+    return res[""].value
