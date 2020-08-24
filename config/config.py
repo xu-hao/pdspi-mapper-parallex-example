@@ -3,7 +3,7 @@ return {
     "pluginType": "m",
     "pluginTypeTitle": "Mapping",
     "pluginSelectors": [],
-    "settingsDefault": {
+    "settingsDefaults": {
         "pluginSelectors": [],
         "patientVariables": [
             {
