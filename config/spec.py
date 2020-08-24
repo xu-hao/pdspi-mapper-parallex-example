@@ -10,8 +10,8 @@ for patient_data in data:
         "patientId": pid
     }
         
-    condition = get_condition_patient(fhir=data)
-    observation = get_observation_patient(fhir=data)
+    condition = get_condition_patient(fhir=patient_data)
+    observation = get_observation_patient(fhir=patient_data)
 
     if "LOINC:2160-0" in requested_patient_variable_ids:
         yield {
