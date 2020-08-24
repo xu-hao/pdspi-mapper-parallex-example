@@ -84,10 +84,12 @@ for patient_data in data:
             }]
         }
     if "LOINC:39156-5" in requested_patient_variable_ids:
+        height = height(observation, "m", timestamp_datetime)
+        weight = weight(observation, "kg", timestamp_datetime)
         yield {
             "values": [{
                 "id": "LOINC:39156-5",
-                **bmi(observation, "kg/m^2", timestamp_datetime)
+                **bmi(height, weight, observation, "kg/m^2", timestamp_datetime)
             }]
         }
 
