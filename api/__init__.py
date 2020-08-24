@@ -48,7 +48,7 @@ def assign(array, keys, value):
     
 def getModelParameter(modelParameters, modelParameterId, proc, default):
     specNames = [modelParameter for modelParameter in modelParameters if modelParameter["id"] == modelParameterId]
-    if len(specNames) == 0:
+    if len(specNames) == 0 or specNames[0].get("parameterValue", {}).get("value") is None:
         specName = default()
     else:
         specName = proc(specNames[0]["parameterValue"]["value"])
