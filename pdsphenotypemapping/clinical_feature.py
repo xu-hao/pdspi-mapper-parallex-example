@@ -1237,6 +1237,10 @@ def average(values, start, end):
     }
 
 
+def get_patient_variable_ids(patient_variables):
+    return list(map(lambda x: x["id"], patient_variables))
+
+
 mapping = {
     "LOINC:2160-0": (get_observation, serum_creatinine, "mg/dL"), # serum creatinine
     "LOINC:82810-3": (get_condition, pregnancy, None), # pregnancy

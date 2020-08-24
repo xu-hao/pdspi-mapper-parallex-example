@@ -17,9 +17,29 @@ logger = logging.getLogger(__name__)
 
 config_url = os.environ.get("CONFIG_URL")
 
+def mappend(a, b):
+    if isinstance(a, list) and isinstance(b, list):
+        obj = a + b
+    elif isinstance(a, dict) and isinstance(b, dict):
+        obj = {}
+        for k, v in a.items():
+            if k in b:
+                obj[k] = mappend(v, b[k])
+            else:
+                obj[k] = v
+        for kb, vb in b.items():
+            if kb not in a:
+                obj[kb] = vb
+    else:
+        obj = b
+    logger.info(f"mappend: {a} {b} {obj}")
+
+    return obj
+    
 def assign(array, keys, value):
+    logger.info(f"assign: {array} {keys} {value}")
     if len(keys) == 0:
-        return value
+        return mappend(array, value)
     else:
         key, *the_keys = keys
         if array is None:

@@ -34,7 +34,14 @@ def query(pids, timestamp, spec_name=None, lib_name=None):
             }]) + ([] if lib_name is None else [{
                 "id": "libraryPath",
                 "parameterValue": {"value": lib_name}
-            }])
+            }]),
+            "patientVariables": [{
+                "id": "LOINC:30525-0"
+            }, {
+                "id": "LOINC:54134-2"
+            }, {
+                "id": "LOINC:21840-4"
+            }]
         },
         "timestamp": timestamp
     })
@@ -48,9 +55,27 @@ def query2(pids, timestamp):
     return requests.post(f"http://pdspi-mapper-parallex-example:8080/mapping", headers=json_headers, json={
         "data": fhir,
         "patientIds": pids,
+        "settingsRequested": {
+            "patientVariables": [{
+                "id": "LOINC:30525-0"
+            }, {
+                "id": "LOINC:54134-2"
+            }, {
+                "id": "LOINC:21840-4"
+            }]
+        },
         "timestamp": timestamp
     })
 
+
+def assert_result(res):
+    assert len(res) == 1
+    for p in res:
+        assert "patientId" in p
+        assert len(p["values"]) == 3
+        for v in p["values"]:
+            assert "id" in v
+            assert "variableValue" in v
 
 def test_api_spec():
     timestamp = "2020-05-02T00:00:00Z"
@@ -60,20 +85,8 @@ def test_api_spec():
     log.info(result.content)
     assert result.status_code == 200
                 
-    assert result.json() == [{
-        "bmi_after": {
-            "variableValue": {
-                "value": None
-            }
-        },
-        "bmi_before": {
-            "variableValue": {
-                "value": None
-            }
-        },
-        "outcome": False
-    }]
-
+    assert_result(result.json())
+    
 def test_api_spec2():
     timestamp = "2020-05-02T00:00:00Z"
     pids = ["MickeyMouse"]
@@ -106,19 +119,7 @@ def test_api_spec4():
     log.info(result.content)
     assert result.status_code == 200
                 
-    assert result.json() == [{
-        "bmi_after": {
-            "variableValue": {
-                "value": None
-            }
-        },
-        "bmi_before": {
-            "variableValue": {
-                "value": None
-            }
-        },
-        "outcome": False
-    }]
+    assert_result(result.json())
 
 def test_api_spec5():
     timestamp = "2020-05-02T00:00:00Z"
