@@ -189,7 +189,7 @@ def convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_n
         },
         "certitude": cert,
         "timestamp": maybe.to_python(ts),
-        "how": c
+        "how": str(c)
     })
 
 
