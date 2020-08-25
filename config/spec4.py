@@ -25,7 +25,7 @@ for pid in patientIds:
     height_before_average = average(start=window_start, end=intervention_date_first, values=height_before)
     weight_before_average = average(start=window_start, end=intervention_date_first, values=weight_before)
     bmi_before = bmi2(height=height_before_average, weight=weight_before_average, unit=bmi_unit, start=window_start, end=intervention_date_first, records=observation)
-    adverse_event = bleeding2(start=intervention_date_first, end=window_end, records=condition)
+    adverse_event = bleeding2(start=intervention_date_first, end=window_end, unit=None, records=condition)
     adverse_event_first = get_first_date(adverse_event)
     end2 = data.coalesce(adverse_event_first, window_end)
     height_after = height2(unit=height_unit, start=intervention_date_first, end=end2, records=observation)

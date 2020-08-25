@@ -92,4 +92,75 @@ for patient_data in data:
                 **bmi(height, weight, observation, "kg/m^2", timestamp_datetime)
             }]
         }
+    if "LOINC:45701-0" in requested_patient_variable_ids:
+        yield {
+            "values": [{
+                "id": "LOINC:45701-0",
+                **fever(condition, None, timestamp_datetime)
+            }]
+        }
+    if "LOINC:LP212175-6" in requested_patient_variable_ids:
+        yield {
+            "values": [{
+                "id": "LOINC:LP212175-6",
+                **date_of_fever_onset(condition, None, timestamp_datetime)
+            }]
+        }
+    if "LOINC:64145-6" in requested_patient_variable_ids:
+        yield {
+            "values": [{
+                "id": "LOINC:64145-6",
+                **cough(condition, None, timestamp_datetime)
+            }]
+        }
+    if "LOINC:85932-2" in requested_patient_variable_ids:
+        yield {
+            "values": [{
+                "id": "LOINC:85932-2",
+                **date_of_cough_onset(condition, None, timestamp_datetime)
+            }]
+        }
+    if "LOINC:54564-0" in requested_patient_variable_ids:
+        yield {
+            "values": [{
+                "id": "LOINC:54564-0",
+                **shortness_of_breath(condition, None, timestamp_datetime)
+            }]
+        }
+
+    if "LOINC:LP128504-0" in requested_patient_variable_ids:
+        yield {
+            "values": [{
+                "id": "LOINC:LP128504-0",
+                **autoimmune_disease(condition, None, timestamp_datetime)
+            }]
+        }
+    if "LOINC:54542-6" in requested_patient_variable_ids:
+        yield {
+            "values": [{
+                "id": "LOINC:54542-6",
+                **pulmonary_disease(condition, None, timestamp_datetime)
+            }]
+        }
+    if "LOINC:LP172921-1" in requested_patient_variable_ids:
+        yield {
+            "values": [{
+                "id": "LOINC:LP172921-1",
+                **cardiovascular_disease(condition, None, timestamp_datetime)
+            }]
+        }
+    if "LOINC:56799-0" in requested_patient_variable_ids:
+        yield {
+            "values": [{
+                "id": "LOINC:56799-0",
+                **address(patient, None, timestamp_datetime)
+            }]
+        }
+    if "LOINC:LP21258-6" in requested_patient_variable_ids:
+        yield {
+            "values": [{
+                "id": "LOINC:54542-6",
+                **oxygen_saturation(observation, None, timestamp_datetime)
+            }]
+        }
 

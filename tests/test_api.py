@@ -35,13 +35,29 @@ def query(pids, timestamp, spec_name=None, lib_name=None):
                 "id": "libraryPath",
                 "parameterValue": {"value": lib_name}
             }]),
-            "patientVariables": [{
-                "id": "LOINC:30525-0"
-            }, {
-                "id": "LOINC:54134-2"
-            }, {
-                "id": "LOINC:21840-4"
-            }]
+            "patientVariables": [
+                {"id":     "LOINC:2160-0"},
+                {"id":     "LOINC:82810-3"},
+                {"id":     "HP:0001892"},
+                {"id":     "HP:0000077"},
+                {"id":     "LOINC:45701-0"},
+                {"id":     "LOINC:LP212175-6"},
+                {"id":     "LOINC:64145-6"},
+                {"id":     "LOINC:85932-2"},
+                {"id":     "LOINC:54564-0"},
+                {"id":     "LOINC:LP128504-0"},
+                {"id":     "LOINC:54542-6"},
+                {"id":     "LOINC:LP172921-1"},
+                {"id":     "LOINC:30525-0"},
+                {"id":     "LOINC:54134-2"},
+                {"id":     "LOINC:54120-1"},
+                {"id":     "LOINC:21840-4"},
+                {"id":     "LOINC:56799-0"},
+                {"id":     "LOINC:8302-2"},
+                {"id":     "LOINC:29463-7"},
+                {"id":     "LOINC:39156-5"},
+                {"id":     "LOINC:LP21258-6"}
+            ]
         },
         "timestamp": timestamp
     })
@@ -56,13 +72,29 @@ def query2(pids, timestamp):
         "data": fhir,
         "patientIds": pids,
         "settingsRequested": {
-            "patientVariables": [{
-                "id": "LOINC:30525-0"
-            }, {
-                "id": "LOINC:54134-2"
-            }, {
-                "id": "LOINC:21840-4"
-            }]
+            "patientVariables": [
+                {"id":     "LOINC:2160-0"},
+                {"id":     "LOINC:82810-3"},
+                {"id":     "HP:0001892"},
+                {"id":     "HP:0000077"},
+                {"id":     "LOINC:45701-0"},
+                {"id":     "LOINC:LP212175-6"},
+                {"id":     "LOINC:64145-6"},
+                {"id":     "LOINC:85932-2"},
+                {"id":     "LOINC:54564-0"},
+                {"id":     "LOINC:LP128504-0"},
+                {"id":     "LOINC:54542-6"},
+                {"id":     "LOINC:LP172921-1"},
+                {"id":     "LOINC:30525-0"},
+                {"id":     "LOINC:54134-2"},
+                {"id":     "LOINC:54120-1"},
+                {"id":     "LOINC:21840-4"},
+                {"id":     "LOINC:56799-0"},
+                {"id":     "LOINC:8302-2"},
+                {"id":     "LOINC:29463-7"},
+                {"id":     "LOINC:39156-5"},
+                {"id":     "LOINC:LP21258-6"}
+            ]
         },
         "timestamp": timestamp
     })
@@ -72,7 +104,7 @@ def assert_result(res):
     assert len(res) == 1
     for p in res:
         assert "patientId" in p
-        assert len(p["values"]) == 3
+        assert len(p["values"]) == 21
         for v in p["values"]:
             assert "id" in v
             assert "variableValue" in v

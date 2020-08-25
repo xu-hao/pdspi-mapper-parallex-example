@@ -40,6 +40,15 @@ def calculation(codes):
     }, codes))
 
 
+def jsonify(obj):
+    if isinstance(obj, dict):
+        return {k: jsonify(v) for k, v in obj.items()}
+    elif isinstance(obj, list) or isinstance(obj, tuple) or isinstance(obj, set):
+        return [jsonify(elem) for elem in obj]
+    else:
+        return str(obj)
+
+
 def calculation_template(clinical_variable, resource_name, timestamp_range, record, to_unit):
     if resource_name == "MedicationRequest":
         code_path = "medication.medicationCodeableConcept"
@@ -114,7 +123,7 @@ def calculation_template(clinical_variable, resource_name, timestamp_range, reco
             "value": value
         }
     return {
-        "request_timestamp": timestamp_range,
+        "request_timestamp": jsonify(timestamp_range),
         "computed_from": ["timestamp", "code", "value", "unit", "request_timestamp"],
         "code": from_code,
         "value": from_value,
@@ -387,41 +396,41 @@ def get_patient_patient(fhir):
 
 def height(records, unit, timestamp):
     return query_records_closest(records, [
-	    {
-	        "system":"http://loinc.org",
-	        "code":"8302-2",
-	        "is_regex": False
-	    }
+            {
+                "system":"http://loinc.org",
+                "code":"8302-2",
+                "is_regex": False
+            }
         ], unit, timestamp, "height", "Observation")
 
 
 def weight(records, unit, timestamp):
     return query_records_closest(records, [
-	    {
-	        "system":"http://loinc.org",
-	        "code":"29463-7",
-	        "is_regex": False
-	    }
+            {
+                "system":"http://loinc.org",
+                "code":"29463-7",
+                "is_regex": False
+            }
         ], unit, timestamp, "weight", "Observation")
 
 
 def height2(records, unit, start, end):
     return query_records_interval(records, [
-	    {
-	        "system":"http://loinc.org",
-	        "code":"8302-2",
-	        "is_regex": False
-	    }
+            {
+                "system":"http://loinc.org",
+                "code":"8302-2",
+                "is_regex": False
+            }
         ], unit, start, end, "height", "Observation")
 
 
 def weight2(records, unit, start, end):
     return query_records_interval(records, [
-	    {
-	        "system":"http://loinc.org",
-	        "code":"29463-7",
-	        "is_regex": False
-	    }
+            {
+                "system":"http://loinc.org",
+                "code":"29463-7",
+                "is_regex": False
+            }
         ], unit, start, end, "weight", "Observation")
 
 
@@ -430,11 +439,11 @@ def bmi2(height, weight, records, unit, start, end):
     w = weight["variableValue"]
     if h["value"] is None or w["value"] is None:
         return query_records_interval(records, [
-	    {
-	        "system":"http://loinc.org",
-	        "code":"39156-5",
-	        "is_regex": False
-	    }
+            {
+                "system":"http://loinc.org",
+                "code":"39156-5",
+                "is_regex": False
+            }
         ], unit, start, end, "bmi", "Observation").map(lambda x:average(x,start,end))
     else:
         hc = convert(h["value"], h["unit"], "m")
@@ -464,11 +473,11 @@ def bmi(height, weight, records, unit, timestamp):
     w = weight["variableValue"]
     if h["value"] is None or w["value"] is None:
         return query_records_closest(records, [
-	    {
-	        "system":"http://loinc.org",
-	        "code":"39156-5",
-	        "is_regex": False
-	    }
+            {
+                "system":"http://loinc.org",
+                "code":"39156-5",
+                "is_regex": False
+            }
         ], unit, timestamp, "bmi", "Observation").map(average)
     else:
         hc = convert(h["value"], h["unit"], "m")
@@ -493,6 +502,58 @@ def bmi(height, weight, records, unit, timestamp):
         })
         
     
+def oxygen_saturation(records, unit, timestamp):
+    return query_records_closest(records, [
+        {
+            "system":"http://loinc.org",
+            "code":"LP21258-6",
+            "is_regex": False
+        }
+    ], unit, timestamp, "oxygen saturation", "Observation")
+
+
+def address(patient, unit, timestamp):
+    if patient == None:
+        return Right({
+            "variableValue": {
+                "value": None
+            },
+            "certitude": 0,
+            "how": "record not found"
+        })
+    else:
+        address = patient.get("address")
+        if address is None:
+            return Right({
+                "variableValue": {
+                    "value": None
+                },
+                "certitude": 0,
+                "how": "address not set"
+            })
+        else:
+            # use home type address if available, otherwise, just use the first address
+            used_addr_dict = None
+            for addr in address:
+                if addr['use'] == 'home':
+                    used_addr_dict = addr
+                    break
+            if not used_addr_dict:
+                used_addr_dict = address[0]
+            used_addr_str = '{line}, {city}, {state} {pc}, {country}'.format(line=','.join(used_addr_dict['line']),
+                                                                             city=used_addr_dict['city'],
+                                                                             state=used_addr_dict['state'],
+                                                                             pc=used_addr_dict['postalCode'],
+                                                                             country=used_addr_dict['country'])
+            return Right({
+                "variableValue": {
+                    "value": used_addr_str
+                },
+                "certitude": 2,
+                "how": f"FHIR resource 'Patient' field>'address' = {used_addr_str}"
+            })
+
+
 def calculate_age2(born, timestamp):
     today = timestamp
     return Right(today.year - born.year - ((today.month, today.day) < (born.month, born.day)))
@@ -642,13 +703,93 @@ race = demographic_extension("http://hl7.org/fhir/StructureDefinition/us-core-ra
 ethnicity = demographic_extension("http://hl7.org/fhir/StructureDefinition/us-core-ethnicity")
 
 
+def fever(records, unit, timestamp):
+    return query_records_closest(records, [
+        {
+            "system": "http://loinc.org",
+            "code": "45701-0",
+            "is_regex": False
+        }
+    ], unit, timestamp, "fever", "Condition")
+
+
+def date_of_fever_onset(records, unit, timestamp):
+    return query_records_closest(records, [
+        {
+            "system": "http://loinc.org",
+            "code": "LP212175-6",
+            "is_regex": False
+        }
+    ], unit, timestamp, "date of fever onset", "Condition")
+
+
+def cough(records, unit, timestamp):
+    return query_records_closest(records, [
+        {
+            "system": "http://loinc.org",
+            "code": "64145-6",
+            "is_regex": False
+        }
+    ], unit, timestamp, "cough", "Condition")
+
+
+def date_of_cough_onset(records, unit, timestamp):
+    return query_records_closest(records, [
+        {
+            "system": "http://loinc.org",
+            "code": "85932-2",
+            "is_regex": False
+        }
+    ], unit, timestamp, "date of cough onset", "Condition")
+
+
+def shortness_of_breath(records, unit, timestamp):
+    return query_records_closest(records, [
+        {
+            "system": "http://loinc.org",
+            "code": "54564-0",
+            "is_regex": False
+        }
+    ], unit, timestamp, "shortness of breath", "Condition")
+
+
+def autoimmune_disease(records, unit, timestamp):
+    return query_records_closest(records, [
+        {
+            "system": "http://loinc.org",
+            "code": "LP128504-0",
+            "is_regex": False
+        }
+    ], unit, timestamp, "autoimmune disease", "Condition")
+
+
+def pulmonary_disease(records, unit, timestamp):
+    return query_records_closest(records, [
+        {
+            "system": "http://loinc.org",
+            "code": "54542-6",
+            "is_regex": False
+        }
+    ], unit, timestamp, "pulmonary disease", "Condition")
+
+
+def cardiovascular_disease(records, unit, timestamp):
+    return query_records_closest(records, [
+        {
+            "system": "http://loinc.org",
+            "code": "LP172921-1",
+            "is_regex": False
+        }
+    ], unit, timestamp, "cardiovascular disease", "Condition")
+
+
 def serum_creatinine(records, unit, timestamp):
     return query_records_closest(records, [
-	{
-	    "system":"http://loinc.org",
-	    "code":"2160-0",
-	    "is_regex": False
-	}
+        {
+            "system":"http://loinc.org",
+            "code":"2160-0",
+            "is_regex": False
+        }
     ], unit, timestamp, "serum creatinine", "Observation")
 
 
@@ -914,11 +1055,11 @@ bleeding_patterns = [
         }
     ]
 
-def bleeding(records, timestamp):
+def bleeding(records, unit, timestamp):
     return query_records_closest(records, bleeding_patterns, None, timestamp, "bleeding", "Condition")
 
 
-def bleeding2(records, start, end):
+def bleeding2(records, unit, start, end):
     return query_records_interval(records, bleeding_patterns, None, start, end, "bleeding", "Condition")
 
 
@@ -928,253 +1069,253 @@ def kidney_dysfunction(records, unit, timestamp):
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N00\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N10\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N17\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N14\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N14.1",
             "is_regex":False,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N14.2",
             "is_regex":False,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"T36.5X5",
             "is_regex":False,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"B52.0",
             "is_regex":False,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"D59.3",
             "is_regex":False,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"E10.2",
             "is_regex":False,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"E11.2",
             "is_regex":False,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"E13.2",
             "is_regex":False,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"I12\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"I13\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"I15.1",
             "is_regex":False,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"I15.2",
             "is_regex":False,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N01\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N02\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N03\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N04\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N05\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N06\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N07\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N08\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N11\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N13\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N15\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N16\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N18\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N19\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N25\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N26\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N27\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N28\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N29\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"Q60\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"Q61\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"Q62\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"Q63\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"Z49\\..*",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"Z99.2",
             "is_regex":True,
-	    
+            
         },
         {
             "system":"http://hl7.org/fhir/sid/icd-10-cm",
             "code":"N12\\..*",
             "is_regex":True,
-	    
+            
         }
     ], unit, timestamp, "kidney dysfunction", "Condition")
 
@@ -1246,11 +1387,21 @@ mapping = {
     "LOINC:82810-3": (get_condition, pregnancy, None), # pregnancy
     "HP:0001892": (get_condition, bleeding, None), # bleeding
     "HP:0000077": (get_condition, kidney_dysfunction, None), # kidney dysfunction
+    "LOINC:45701-0": (get_condition, fever, None),
+    "LOINC:LP212175-6": (get_condition, date_of_fever_onset, None),
+    "LOINC:64145-6": (get_condition, cough, None),
+    "LOINC:85932-2": (get_condition, date_of_cough_onset, None),
+    "LOINC:54564-0": (get_condition, shortness_of_breath, None),
+    "LOINC:LP128504-0": (get_condition, autoimmune_disease, None),
+    "LOINC:54542-6": (get_condition, pulmonary_disease, None),
+    "LOINC:LP172921-1": (get_condition, cardiovascular_disease, None),
     "LOINC:30525-0": (get_patient, age, "year"),
     "LOINC:54134-2": (get_patient, race, None),
     "LOINC:54120-1": (get_patient, ethnicity, None),
     "LOINC:21840-4": (get_patient, sex, None),
+    "LOINC:56799-0": (get_patient, address, None),
     "LOINC:8302-2": (get_observation, height, "m"),
     "LOINC:29463-7": (get_observation, weight, "kg"),
-    "LOINC:39156-5": (get_observation, bmi, "kg/m^2")
+    "LOINC:39156-5": (get_observation, bmi, "kg/m^2"),
+    "LOINC:LP21258-6": (get_observation, oxygen_saturation, "%")
 }
