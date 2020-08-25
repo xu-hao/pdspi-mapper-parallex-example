@@ -1,4 +1,5 @@
 return {
+    "pluginDependencies": ["pdspi-fhir-example"],
     "title": "tx-parallex variable mapper",
     "pluginType": "m",
     "pluginTypeTitle": "Mapping",
