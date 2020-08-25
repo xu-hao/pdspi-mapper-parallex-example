@@ -444,7 +444,7 @@ def bmi2(height, weight, records, unit, start, end):
                 "code":"39156-5",
                 "is_regex": False
             }
-        ], unit, start, end, "bmi", "Observation").map(lambda x:average(x,start,end))
+        ], unit, start, end, "bmi", "Observation").map(average)
     else:
         hc = convert(h["value"], h["unit"], "m")
         wc = convert(w["value"], w["unit"], "kg")
@@ -478,7 +478,7 @@ def bmi(height, weight, records, unit, timestamp):
                 "code":"39156-5",
                 "is_regex": False
             }
-        ], unit, timestamp, "bmi", "Observation").map(average)
+        ], unit, timestamp, "bmi", "Observation")
     else:
         hc = convert(h["value"], h["unit"], "m")
         wc = convert(w["value"], w["unit"], "kg")
@@ -1370,7 +1370,7 @@ def adverse_event(records, start, end):
     return []
 
 
-def average(values, start, end):
+def average(values):
     return values[0] if len(values) > 0 else {
         "variableValue": {
             "value": None
