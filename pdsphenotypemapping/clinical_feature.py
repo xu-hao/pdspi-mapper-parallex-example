@@ -460,11 +460,11 @@ def bmi2(height, weight, records, unit, start, end):
                 "unit": unit
             },
             "certitutde": min(height["certitude"], weight["certitude"]),
-            "how": {
+            "how": str({
                 "computed_from": ["height", "weight"],
                 "height": height['how'],
                 "weight": weight['how']
-            }
+            })
         })
         
     
@@ -494,11 +494,11 @@ def bmi(height, weight, records, unit, timestamp):
                 "unit": unit
             },
             "certitutde": min(height["certitude"], weight["certitude"]),
-            "how": {
+            "how": str({
                 "computed_from": ["height", "weight"],
                 "height": height['how'],
                 "weight": weight['how']
-            }
+            })
         })
         
     
@@ -670,7 +670,11 @@ def demographic_extension(url):
                 else:
                     certitude = 2
                     value = []
-                    calculation = url
+                    calculation = {
+                        "from": {
+                            "extension": url
+                        }
+                    }
                     hasValueCodeableConcept = True
                     
                     for a in filtered:
@@ -692,7 +696,7 @@ def demographic_extension(url):
                             "value": value
                         },
                         "certitude": certitude,
-                        "how": calculation
+                        "how": str(calculation)
                     })
     return func
 
