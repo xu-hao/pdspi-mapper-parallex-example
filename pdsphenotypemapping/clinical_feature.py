@@ -583,7 +583,7 @@ def age(patient, unit, timestamp):
                     "unit": "year"
                 },
                 "certitude": 2,
-                "how": {
+                "how": str({
                     "request_timestamp": today,
                     "computed_from": [
                         "request_timestamp", "birthDate"
@@ -595,7 +595,7 @@ def age(patient, unit, timestamp):
                         },
                         "value": birth_date
                     }
-                }
+                })
             })
         else:
             return Right({
