@@ -672,7 +672,9 @@ def demographic_extension(url):
                     value = []
                     calculation = {
                         "from": {
-                            "extension": url
+                            "extension": {
+                                "url": url
+                            }
                         }
                     }
                     hasValueCodeableConcept = True
