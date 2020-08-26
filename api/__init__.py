@@ -77,7 +77,7 @@ def getModelParameter(modelParameters, modelParameterId, proc, default):
 
 def jsonify(obj):
     if isinstance(obj, dict):
-        return {k: json.dumps(v, sort_keys=True) if k == "how" else jsonify(v) for k, v in obj.items()}
+        return {k: json.dumps(jsonify(v), sort_keys=True) if k == "how" else jsonify(v) for k, v in obj.items()}
     elif isinstance(obj, list) or isinstance(obj, tuple) or isinstance(obj, set):
         return [jsonify(elem) for elem in obj]
     else:
