@@ -30,6 +30,10 @@ def key(a):
         return Just("authoredOn")
     elif "dispenseRequest" in a:
         return Just(["dispenseRequest", "validityPeriod", "start"])
+    elif "issued" in a:               
+        return Just(["issued"])       
+    elif "assertedDate" in a:         
+        return Just(["assertedDate"]) 
     return Nothing
         
 
@@ -1327,19 +1331,12 @@ def kidney_dysfunction(records, unit, timestamp):
 
 
 def DOAC2(records, start, end):
-    print("records = " + str(records))
-    return query_records_interval(records, [
-        {
-            "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
-            "code":"1114195",
-            "is_regex": False
-        }, {
-            "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
-            "code":"1599538",
-            "is_regex": False
-        }
-    ], None, start, end, "DOAC", "MedicationRequest")
+    return query_records_interval(records, doac_event_code_maps, None, start, end, "DOAC", "MedicationRequest")
 
+
+def DOAC_Interventions(records, start, end):#for testing since records cannot find this code                   
+    return query_records_interval(records, doac_event_code_maps, None, start, end, "DOAC", "MedicationRequest")
+                                                                                                               
 
 def strtodate2(s):
     date = strtodate(s)
@@ -1386,6 +1383,63 @@ def average(values):
 
 def get_patient_variable_ids(patient_variables):
     return list(map(lambda x: x["id"], patient_variables))
+
+
+doac_event_code_maps =[                                                
+        #apixaban                                                      
+        {                                                              
+                "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code":"1364441",                                      
+                "is_regex": False                                      
+        }, {                                                           
+                "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code":"1364447",                                      
+                "is_regex": False                                      
+        }, {                                                           
+                "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code":"1992428",                                      
+                "is_regex": False                                      
+        }, {                                                           
+                "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code":"1364435",                                      
+                "is_regex": False                                      
+        }, {                                                           
+        #dabigatran etexilate                                          
+                "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code":"1037049",                                      
+                "is_regex": False                                      
+        }, {                                                           
+                "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code":"1037181",                                      
+                "is_regex": False                                      
+        }, {                                                           
+        #rivaroxaban                                                   
+                "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code":"1114202",                                      
+                "is_regex": False                                      
+        }, {                                                           
+                "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code":"1232084",                                      
+                "is_regex": False                                      
+        }, {                                                           
+                "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code":"1232088",                                      
+                "is_regex": False                                      
+        }, {                                                           
+                "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code":"1549683",                                      
+                "is_regex": False                                      
+        }, {                                                           
+        #edoxaban                                                      
+                "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code":"1599553",                                      
+                "is_regex": False                                      
+        }, {                                                           
+                "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code":"1599557",                                      
+                "is_regex": False                                      
+        }                                                              
+]                                                                      
 
 
 mapping = {
