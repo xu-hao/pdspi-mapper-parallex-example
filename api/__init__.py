@@ -80,6 +80,8 @@ def jsonify(obj):
         return {k: json.dumps(jsonify(v), sort_keys=True) if k == "how" else jsonify(v) for k, v in obj.items()}
     elif isinstance(obj, list) or isinstance(obj, tuple) or isinstance(obj, set):
         return [jsonify(elem) for elem in obj]
+    elif isinstance(obj, int) or isinstance(obj, float) or isinstance(obj, bool) or isinstance(obj, str) or obj is None:
+        return obj
     else:
         return str(obj)
 

@@ -23,7 +23,7 @@ def test_age():
     age = pdsphenotypemapping.clinical_feature.age(unit=age_unit, timestamp=timestamp, patient=patient.value)
     assert age == Right({
         'certitude': 2,
-        'how': json.dumps({
+        'how': {
             'birthDate': {
                 'computed_from': {
                     'field': 'birthDate',
@@ -33,7 +33,7 @@ def test_age():
             },
             'computed_from': ['request_timestamp', 'birthDate'],
             'request_timestamp': '2020-05-02'
-        }, sort_keys=True),
+        },
         'variableValue': {'unit': 'year', 'value': 59}
     })
 
