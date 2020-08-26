@@ -1,9 +1,10 @@
 from functools import reduce, partial
-from tx.fhir.utils import unbundle
-from tx.dateutils.utils import tstostr, strtots, strtodate
 from datetime import datetime, date, timezone
 import os
 import re
+import json
+from tx.fhir.utils import unbundle
+from tx.dateutils.utils import tstostr, strtots, strtodate
 from tx.functional.either import Left, Right, Either, either
 from tx.functional.maybe import Just, Nothing, maybe
 from tx.functional.utils import const
@@ -42,15 +43,6 @@ def calculation(codes):
         "system": a["system"],
         "code": a["code"]
     }, codes))
-
-
-def jsonify(obj):
-    if isinstance(obj, dict):
-        return {k: jsonify(v) for k, v in obj.items()}
-    elif isinstance(obj, list) or isinstance(obj, tuple) or isinstance(obj, set):
-        return [jsonify(elem) for elem in obj]
-    else:
-        return str(obj)
 
 
 def calculation_template(clinical_variable, resource_name, timestamp_range, record, to_unit):
@@ -127,7 +119,7 @@ def calculation_template(clinical_variable, resource_name, timestamp_range, reco
             "value": value
         }
     return {
-        "request_timestamp": jsonify(timestamp_range),
+        "request_timestamp": timestamp_range,
         "computed_from": ["timestamp", "code", "value", "unit", "request_timestamp"],
         "code": from_code,
         "value": from_value,
@@ -193,7 +185,7 @@ def convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_n
         },
         "certitude": cert,
         "timestamp": maybe.to_python(ts),
-        "how": str(c)
+        "how": c
     })
 
 
@@ -464,11 +456,11 @@ def bmi2(height, weight, records, unit, start, end):
                 "unit": unit
             },
             "certitutde": min(height["certitude"], weight["certitude"]),
-            "how": str({
+            "how": {
                 "computed_from": ["height", "weight"],
                 "height": height['how'],
                 "weight": weight['how']
-            })
+            }
         })
         
     
@@ -498,11 +490,11 @@ def bmi(height, weight, records, unit, timestamp):
                 "unit": unit
             },
             "certitutde": min(height["certitude"], weight["certitude"]),
-            "how": str({
+            "how": {
                 "computed_from": ["height", "weight"],
                 "height": height['how'],
                 "weight": weight['how']
-            })
+            }
         })
         
     
@@ -587,7 +579,7 @@ def age(patient, unit, timestamp):
                     "unit": "year"
                 },
                 "certitude": 2,
-                "how": str({
+                "how": {
                     "request_timestamp": today,
                     "computed_from": [
                         "request_timestamp", "birthDate"
@@ -599,7 +591,7 @@ def age(patient, unit, timestamp):
                         },
                         "value": birth_date
                     }
-                })
+                }
             })
         else:
             return Right({
@@ -702,7 +694,7 @@ def demographic_extension(url):
                             "value": value
                         },
                         "certitude": certitude,
-                        "how": str(calculation)
+                        "how": calculation
                     })
     return func
 
@@ -1346,27 +1338,23 @@ def strtodate2(s):
 
 
 def get_first_date(values):
-    sorted_values = sorted(values, key=lambda x: strtodate2(x["timestamp"]))
-    if len(sorted_values) == 0:
-        return None
-    else:
-        return strtodate2(sorted_values[0]["timestamp"])
+    return get_first(values).map(lambda x: x["timestamp"])
 
 
 def get_first(values):
     sorted_values = sorted(values, key=lambda x: strtodate2(x["timestamp"]))
     if len(sorted_values) == 0:
-        return None
+        return Left("empty list")
     else:
-        return sorted_values[0]
+        return Right(sorted_values[0])
 
 
 def get_last(values):
     sorted_values = sorted(values, key=lambda x: strtodate2(x["timestamp"]))
     if len(sorted_values) == 0:
-        return None
+        return Left("empty list")
     else:
-        return sorted_values[-1]
+        return Right(sorted_values[-1])
 
 
 def adverse_event(records, start, end):
@@ -1386,6 +1374,15 @@ def get_patient_variable_ids(patient_variables):
 
 
 doac_event_code_maps =[                                                
+        {                                                          
+            "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+            "code":"1114195",                                      
+            "is_regex": False                                      
+        }, {                                                       
+            "system":"http://www.nlm.nih.gov/research/umls/rxnorm",
+            "code":"1599538",                                      
+            "is_regex": False                                      
+        },                                                          
         #apixaban                                                      
         {                                                              
                 "system":"http://www.nlm.nih.gov/research/umls/rxnorm",

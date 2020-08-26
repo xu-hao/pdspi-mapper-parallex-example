@@ -75,6 +75,15 @@ def getModelParameter(modelParameters, modelParameterId, proc, default):
     return specName
 
 
+def jsonify(obj):
+    if isinstance(obj, dict):
+        return {k: json.dumps(v, sort_keys=True) if k == "how" else jsonify(v) for k, v in obj.items()}
+    elif isinstance(obj, list) or isinstance(obj, tuple) or isinstance(obj, set):
+        return [jsonify(elem) for elem in obj]
+    else:
+        return str(obj)
+
+
 def mappingClinicalFromData(body):
     config = get_default_config(get_config())
     settingsRequested = body.get("settingsRequested", {})
@@ -126,7 +135,7 @@ def mappingClinicalFromData(body):
         indices = [] if k == "" else k.split(".")
         ret = assign(ret, list(map(lambda index: int(index) if index.isdigit() else index, indices)), v.value)
 
-    return json.loads(json.dumps(ret))
+    return json.loads(json.dumps(jsonify(ret)))
         
 
 def get_default_config(default):

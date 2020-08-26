@@ -4,6 +4,7 @@ import pdsphenotypemapping.clinical_feature
 from tx.functional.either import Either, Right
 from tx.parallex import run_python
 import datetime
+import json
 
 timestamp = strtodate("2020-05-02T00:00:00Z")
 pids = ["MickeyMouse"]
@@ -22,7 +23,7 @@ def test_age():
     age = pdsphenotypemapping.clinical_feature.age(unit=age_unit, timestamp=timestamp, patient=patient.value)
     assert age == Right({
         'certitude': 2,
-        'how': {
+        'how': json.dumps({
             'birthDate': {
                 'computed_from': {
                     'field': 'birthDate',
@@ -32,7 +33,7 @@ def test_age():
             },
             'computed_from': ['request_timestamp', 'birthDate'],
             'request_timestamp': '2020-05-02'
-        },
+        }, sort_keys=True),
         'variableValue': {'unit': 'year', 'value': 59}
     })
 
