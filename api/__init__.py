@@ -98,16 +98,24 @@ def mappingClinicalFromData(body):
     logger.info(f"specName = {specName}")
     validate_filename(specName)
     
-    pythonLibrary = getModelParameter(modelParameters, "libraryPath", Just, lambda: getModelParameter(modelParametersDefault, "libraryPath", Just, lambda: Nothing))
-    pythonLibrary.map(validate_filename)
-    
+    pythonLibrary = getModelParameter(modelParameters, "libraryPath", identity, lambda: getModelParameter(modelParametersDefault, "libraryPath", identity, lambda: []))
+
+    logger.info(f"pythonLibrary = {pythonLibrary}")
+    for p in pythonLibrary:
+        validate_filename(p)
+
     nthreads = getModelParameter(modelParameters, "nthreads", int, lambda: getModelParameter(modelParametersDefault, "nthreads", int, lambda: 3))
-    
+    logger.info(f"nthreads = {nthreads}")
+
     level = getModelParameter(modelParameters, "level", int, lambda: getModelParameter(modelParametersDefault, "level", int, lambda: 0))
+    logger.info(f"level = {level}")
+    additional_arguments = getModelParameter(modelParameters, "args", identity, lambda: getModelParameter(modelParametersDefault, "args", identity, lambda: {}))
+    logger.info(f"additional_arguments = {additional_arguments}")
     
     spec_path = Path(__file__).parent.parent / "config" / specName
-    lib_path = pythonLibrary.map(lambda pythonLibrary: str(Path(__file__).parent.parent / "config" / pythonLibrary)).rec(lambda x: [x], [])
+    lib_path = list(map(lambda p: str(Path(__file__).parent.parent / "config" / p), pythonLibrary))
     logger.info(f"spec_path = {spec_path}")
+    logger.info(f"lib_path = {lib_path}")
     
     with open(spec_path) as f:
         spec = f.read()
@@ -122,7 +130,8 @@ def mappingClinicalFromData(body):
         "patientIds": body["patientIds"],
         "patientVariables": patientVariables,
         "timestamp": body["timestamp"],
-        "data": body["data"]
+        "data": body["data"],
+        **additional_arguments
     }, output_path = None, system_paths = lib_path, validate_spec = False, level=level, object_store=None)
 
     if profile is not None:

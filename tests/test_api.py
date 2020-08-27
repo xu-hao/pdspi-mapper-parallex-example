@@ -19,7 +19,7 @@ log.info(f"looking for fhir at {data_dir}")
 
 resource_names = ["Patient", "MedicationRequest", "Condition", "Observation"]
 
-def query(pids, timestamp, spec_name=None, lib_name=None):
+def query(pids, timestamp, spec_name=None, lib_name=None, addarg=None):
     fhir = get_entries(json_in_dir=data_dir, pids=pids, resource_names=resource_names)
 
     log.info(f"fhir = {fhir}")
@@ -33,7 +33,10 @@ def query(pids, timestamp, spec_name=None, lib_name=None):
                 "parameterValue": {"value": spec_name}
             }]) + ([] if lib_name is None else [{
                 "id": "libraryPath",
-                "parameterValue": {"value": lib_name}
+                "parameterValue": {"value": [lib_name]}
+            }]) + ([] if addarg is None else [{
+                "id": "args",
+                "parameterValue": {"value": addarg}
             }]),
             "patientVariables": [
                 {"id":     "LOINC:2160-0"},
@@ -182,5 +185,16 @@ def test_api_spec5():
             }
         ]
     }]
+
+
+def test_api_addarg():
+    timestamp = "2020-05-02T00:00:00Z"
+    pids = ["MickeyMouse"]
+
+    result = query(pids, timestamp, spec_name="addarg.py", addarg={"t": "a"})
+    log.info(result.content)
+    assert result.status_code == 200
+                
+    assert result.json() == "a"
 
     
