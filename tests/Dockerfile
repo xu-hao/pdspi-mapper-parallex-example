@@ -1,6 +1,6 @@
-FROM python:3-alpine
+FROM python:3.8-buster
 
-RUN pip3 install --no-cache-dir pytest requests pyyaml python-dateutil==2.8.1 tx-functional>=0.0.16 tx-parallex>=0.1.0 pint
+RUN pip3 install --no-cache-dir pytest requests pyyaml python-dateutil==2.8.1 tx-functional>=0.0.16 tx-parallex[arrow]>=0.1.1 pint
 
 RUN mkdir /test
 

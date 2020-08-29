@@ -5,8 +5,10 @@ import re
 import json
 from tx.fhir.utils import unbundle
 from tx.dateutils.utils import tstostr, strtots, strtodate
-from tx.functional.either import Left, Right, Either, either
-from tx.functional.maybe import Just, Nothing, maybe
+from tx.functional.either import Left, Right, Either, either_applicative
+from tx.functional.maybe import Just, Nothing
+import tx.functional.maybe as maybe
+from tx.functional.list import list_traversable
 from tx.functional.utils import const
 from tx.pint.utils import convert
 import logging
@@ -14,6 +16,7 @@ from tx.readable_log import getLogger
 
 logger = getLogger(__name__, logging.INFO)
 
+list_traversable_either_applicative = list_traversable(either_applicative)
 
 
 def extract_key(a):
@@ -98,7 +101,7 @@ def calculation_template(clinical_variable, resource_name, timestamp_range, reco
                 "value": from_unit
             }
             if to_unit is not None and not unit_eq(to_unit, from_unit):
-                unit = {
+               unit = {
                     "computed_from": ["from", "to"],
                     "from": unit_from,
                     "to": {
@@ -162,7 +165,7 @@ def filter_records(records, codes, resource_name):
 
 def convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_name):
     ts = extract_key(record)
-    cert = ts.rec(const(2), 1) 
+    cert = ts.rec(partial(const, 2), 1) 
     vq = record.get("valueQuantity")
     if vq is not None:
         v = vq["value"]
@@ -268,7 +271,7 @@ def query_records_interval(records, codes, unit, start, end, clinical_variable, 
     def handle_records_filtered(records_filtered):
         records2 = filter(in_study_period, records_filtered)
         timestamp = {"start": start, "end": end}
-        return either.sequence(map(lambda record: convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_name), records2))
+        return list_traversable_either_applicative.sequence(map(lambda record: convert_record_to_pds(record, unit, timestamp, clinical_variable, resource_name), records2))
 
     return filter_records(records, codes, resource_name).bind(handle_records_filtered)
 
