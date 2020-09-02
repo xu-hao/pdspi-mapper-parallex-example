@@ -32,12 +32,10 @@ def mappend(a, b):
                 obj[kb] = vb
     else:
         obj = b
-    logger.info(f"mappend: {a} {b} {obj}")
 
     return obj
     
 def assign(array, keys, value):
-    logger.info(f"assign: {array} {keys} {value}")
     if len(keys) == 0:
         return mappend(array, value)
     else:
