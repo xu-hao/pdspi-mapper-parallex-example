@@ -2,10 +2,12 @@ import requests
 import yaml
 from pathlib import Path
 from pdspi.pds_fhir_loader import get_entries
+from pdsphenotypemapping.clinical_feature import get_patient_patient
 import logging
-from tempfile import mkstemp
+from tempfile import mkdtemp
 import os
 import json
+import shutil
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -26,11 +28,12 @@ input_dir = os.environ.get("INPUT_DIR")
 def query(pids, timestamp, spec_name=None, lib_name=None, addarg=None, input_file=False):
     fhir = get_entries(json_in_dir=data_dir, pids=pids, resource_names=resource_names)
     if input_file:
-        fd, tmpfile = mkstemp(dir=input_dir)
-        tmpname = os.path.basename(tmpfile)
-        os.close(fd)
-        with open(tmpfile, "w") as f:
-            json.dump(fhir, f)
+        tmpdir = mkdtemp(dir=input_dir)
+        tmpname = os.path.basename(tmpdir)
+        for patient in fhir:
+            patient_id = get_patient_patient(patient).value["id"]
+            with open(os.path.join(tmpdir, patient_id + ".json"), "w") as f:
+                json.dump(patient, f)
         fhir = {
             "$ref": tmpname
         }
@@ -80,7 +83,7 @@ def query(pids, timestamp, spec_name=None, lib_name=None, addarg=None, input_fil
         })
     finally:
         if input_file:
-            os.remove(tmpfile)
+            shutil.rmtree(tmpdir)
 
 def query2(pids, timestamp):
     fhir = get_entries(json_in_dir=data_dir, pids=pids, resource_names=resource_names)

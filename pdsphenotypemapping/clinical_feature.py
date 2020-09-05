@@ -13,6 +13,7 @@ from tx.functional.utils import const
 from tx.pint.utils import convert
 import logging
 from tx.readable_log import getLogger
+from tempfile import mkdtemp
 
 logger = getLogger(__name__, logging.INFO)
 
@@ -288,7 +289,19 @@ def filter_records_interval(records, start, end):
     records = filter(in_study_period, records)
     return records
 
+input_dir = os.environ.get("INPUT_DIR", "/tmp")
 
+def deref(fhir, patient_id):
+    if isinstance(fhir, dict) and (dirname := fhir.get("$ref")) is not None:
+        try:
+            with open(os.path.join(input_dir, dirname, patient_id + ".json")) as input_file:
+                return Right(json.load(input_file))
+        except Exception as e:
+            return Left(str(e))
+    else:
+        return get_patient_batch_response(patient_id, fhir)
+
+    
 def get_observation(patient_id, fhir):
     return get_resource("Observation", patient_id, fhir)
 
@@ -322,7 +335,7 @@ def either_to_maybe(e):
 
     
 def get_resource(resource_type, patient_id, fhir):
-    return get_patient_batch_response(patient_id, fhir).bind(partial(get_resource_patient, resource_type))
+    return deref(fhir, patient_id).bind(partial(get_resource_patient, resource_type))
                                                                                                           
                                                                                                           
 def get_resource_patient(resource_type, fhir):                                                            

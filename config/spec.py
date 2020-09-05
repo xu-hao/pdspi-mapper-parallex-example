@@ -3,7 +3,8 @@ from tx.dateutils.utils import strtodate
 from dateutil.relativedelta import relativedelta
 requested_patient_variable_ids = get_patient_variable_ids(patientVariables)
 timestamp_datetime = strtodate(timestamp)
-for patient_data in data:
+for patient_id in patientIds:
+    patient_data = deref(data, patient_id)
     patient = get_patient_patient(patient_data)
     pid = patient["id"]
     yield {
