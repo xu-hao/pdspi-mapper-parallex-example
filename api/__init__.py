@@ -83,6 +83,8 @@ def jsonify(obj):
     else:
         return str(obj)
 
+input_dir = os.environ.get("INPUT_DIR", "/tmp")
+output_dir = os.environ.get("OUTPUT_DIR", "/tmp")
 
 def mappingClinicalFromData(body):
     config = get_default_config(get_config())
@@ -124,11 +126,20 @@ def mappingClinicalFromData(body):
     if profile is not None:
         yappi.start()
 
+    data_inp = body["data"]
+    
+    if isinstance(data_inp, dict) and (ref := data_inp.get("$ref")) is not None:
+        validate_filename(ref)
+        with open(os.path.join(input_dir, ref)) as f:
+            data = json.load(f)
+    else:
+        data = data_inp
+        
     res = start_python(nthreads, py = spec, data = {
         "patientIds": body["patientIds"],
         "patientVariables": patientVariables,
         "timestamp": body["timestamp"],
-        "data": body["data"],
+        "data": data,
         **additional_arguments
     }, output_path = None, system_paths = lib_path, validate_spec = False, level=level, object_store=None)
 

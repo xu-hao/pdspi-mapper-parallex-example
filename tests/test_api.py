@@ -3,7 +3,9 @@ import yaml
 from pathlib import Path
 from pdspi.pds_fhir_loader import get_entries
 import logging
-
+from tempfile import mkstemp
+import os
+import json
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -19,52 +21,66 @@ log.info(f"looking for fhir at {data_dir}")
 
 resource_names = ["Patient", "MedicationRequest", "Condition", "Observation"]
 
-def query(pids, timestamp, spec_name=None, lib_name=None, addarg=None):
+input_dir = os.environ.get("INPUT_DIR")
+
+def query(pids, timestamp, spec_name=None, lib_name=None, addarg=None, input_file=False):
     fhir = get_entries(json_in_dir=data_dir, pids=pids, resource_names=resource_names)
+    if input_file:
+        fd, tmpfile = mkstemp(dir=input_dir)
+        tmpname = os.path.basename(tmpfile)
+        os.close(fd)
+        with open(tmpfile, "w") as f:
+            json.dump(fhir, f)
+        fhir = {
+            "$ref": tmpname
+        }
 
-    log.info(f"fhir = {fhir}")
+    try:
+        log.info(f"fhir = {fhir}")
 
-    return requests.post(f"http://pdspi-mapper-parallex-example:8080/mapping", headers=json_headers, json={
-        "data": fhir,
-        "patientIds": pids,
-        "settingsRequested": {
-            "modelParameters": ([] if spec_name is None else [{
-                "id": "specName",
-                "parameterValue": {"value": spec_name}
-            }]) + ([] if lib_name is None else [{
-                "id": "libraryPath",
-                "parameterValue": {"value": [lib_name]}
-            }]) + ([] if addarg is None else [{
-                "id": "args",
-                "parameterValue": {"value": addarg}
-            }]),
-            "patientVariables": [
-                {"id":     "LOINC:2160-0"},
-                {"id":     "LOINC:82810-3"},
-                {"id":     "HP:0001892"},
-                {"id":     "HP:0000077"},
-                {"id":     "LOINC:45701-0"},
-                {"id":     "LOINC:LP212175-6"},
-                {"id":     "LOINC:64145-6"},
-                {"id":     "LOINC:85932-2"},
-                {"id":     "LOINC:54564-0"},
-                {"id":     "LOINC:LP128504-0"},
-                {"id":     "LOINC:54542-6"},
-                {"id":     "LOINC:LP172921-1"},
-                {"id":     "LOINC:30525-0"},
-                {"id":     "LOINC:54134-2"},
-                {"id":     "LOINC:54120-1"},
-                {"id":     "LOINC:21840-4"},
-                {"id":     "LOINC:56799-0"},
-                {"id":     "LOINC:8302-2"},
-                {"id":     "LOINC:29463-7"},
-                {"id":     "LOINC:39156-5"},
-                {"id":     "LOINC:LP21258-6"}
-            ]
-        },
-        "timestamp": timestamp
-    })
-
+        return requests.post(f"http://pdspi-mapper-parallex-example:8080/mapping", headers=json_headers, json={
+            "data": fhir,
+            "patientIds": pids,
+            "settingsRequested": {
+                "modelParameters": ([] if spec_name is None else [{
+                    "id": "specName",
+                    "parameterValue": {"value": spec_name}
+                }]) + ([] if lib_name is None else [{
+                    "id": "libraryPath",
+                    "parameterValue": {"value": [lib_name]}
+                }]) + ([] if addarg is None else [{
+                    "id": "args",
+                    "parameterValue": {"value": addarg}
+                }]),
+                "patientVariables": [
+                    {"id":     "LOINC:2160-0"},
+                    {"id":     "LOINC:82810-3"},
+                    {"id":     "HP:0001892"},
+                    {"id":     "HP:0000077"},
+                    {"id":     "LOINC:45701-0"},
+                    {"id":     "LOINC:LP212175-6"},
+                    {"id":     "LOINC:64145-6"},
+                    {"id":     "LOINC:85932-2"},
+                    {"id":     "LOINC:54564-0"},
+                    {"id":     "LOINC:LP128504-0"},
+                    {"id":     "LOINC:54542-6"},
+                    {"id":     "LOINC:LP172921-1"},
+                    {"id":     "LOINC:30525-0"},
+                    {"id":     "LOINC:54134-2"},
+                    {"id":     "LOINC:54120-1"},
+                    {"id":     "LOINC:21840-4"},
+                    {"id":     "LOINC:56799-0"},
+                    {"id":     "LOINC:8302-2"},
+                    {"id":     "LOINC:29463-7"},
+                    {"id":     "LOINC:39156-5"},
+                    {"id":     "LOINC:LP21258-6"}
+                ]
+            },
+            "timestamp": timestamp
+        })
+    finally:
+        if input_file:
+            os.remove(tmpfile)
 
 def query2(pids, timestamp):
     fhir = get_entries(json_in_dir=data_dir, pids=pids, resource_names=resource_names)
@@ -117,6 +133,16 @@ def test_api_spec():
     pids = ["MickeyMouse"]
 
     result = query(pids, timestamp)
+    log.info(result.content)
+    assert result.status_code == 200
+                
+    assert_result(result.json())
+    
+def test_api_spec_data_from_file():
+    timestamp = "2020-05-02T00:00:00Z"
+    pids = ["MickeyMouse"]
+
+    result = query(pids, timestamp, input_file=True)
     log.info(result.content)
     assert result.status_code == 200
                 

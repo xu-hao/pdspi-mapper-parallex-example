@@ -263,9 +263,11 @@ paths:
                     type: string
                 data:
                   description: "An array of FHIR bundles, one per patient id of type 'batch-response'."
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/Bundle"
+                  anyOf:
+                    - type: array
+                      items:
+                        $ref: "#/components/schemas/Bundle"
+                    - type: object
                 timestamp:
                   type: string
                   format: date-time
