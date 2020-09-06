@@ -9,6 +9,7 @@ from pathvalidate import validate_filename
 from tx.requests.utils import get
 import yappi
 import json
+import jsonpickle
 
 yappi.set_clock_type(os.environ.get("CLOCK_TYPE", "wall"))
 
@@ -84,6 +85,8 @@ def jsonify(obj):
         return str(obj)
 
 
+output_dir = os.environ.get("OUTPUT_DIR")
+
 def mappingClinicalFromData(body):
     config = get_default_config(get_config())
     settingsRequested = body.get("settingsRequested", {})
@@ -101,6 +104,10 @@ def mappingClinicalFromData(body):
     logger.info(f"pythonLibrary = {pythonLibrary}")
     for p in pythonLibrary:
         validate_filename(p)
+
+    outputPath = getModelParameter(modelParameters, "outputPath", identity, lambda: getModelParameter(modelParametersDefault, "outputPath", identity, lambda: None))
+    if outputPath is not None:
+        validate_filename(outputPath)
 
     nthreads = getModelParameter(modelParameters, "nthreads", int, lambda: getModelParameter(modelParametersDefault, "nthreads", int, lambda: 3))
     logger.info(f"nthreads = {nthreads}")
@@ -124,13 +131,14 @@ def mappingClinicalFromData(body):
     if profile is not None:
         yappi.start()
 
+    output_file = None if outputPath is None else os.path.join(output_dir, outputPath)
     res = start_python(nthreads, py = spec, data = {
         "patientIds": body["patientIds"],
         "patientVariables": patientVariables,
         "timestamp": body["timestamp"],
         "data": body["data"],
         **additional_arguments
-    }, output_path = None, system_paths = lib_path, validate_spec = False, level=level, object_store=None)
+    }, output_path = output_file, system_paths = lib_path, validate_spec = False, level=level, object_store=None)
 
     if profile is not None:
         yappi.stop()
@@ -139,12 +147,25 @@ def mappingClinicalFromData(body):
         stats.sort("tsub")
         stats.print_all()
 
-    ret = None
-    for k,v in res.items():
-        indices = [] if k == "" else k.split(".")
-        ret = assign(ret, list(map(lambda index: int(index) if index.isdigit() else index, indices)), v.value)
+    def proc_res(res, ret):
+        for k,v in res.items():
+            indices = [] if k == "" else k.split(".")
+            ret = assign(ret, list(map(lambda index: int(index) if index.isdigit() else index, indices)), v.value)
+        return ret
 
-    return json.loads(json.dumps(jsonify(ret)))
+    ret = None
+    if outputPath is None:
+        ret = proc_res(res, ret)
+    else:
+        with open(output_file) as o:
+            for line in o:
+                logger.info(f"{line}")
+                ret = proc_res(jsonpickle.decode(line), ret)
+        with open(output_file, "w") as o2:
+            json.dump(jsonify(ret), o2)
+        ret = None
+    logger.info(f"{ret}")
+    return jsonify(ret)
         
 
 def get_default_config(default):

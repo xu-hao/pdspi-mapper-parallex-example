@@ -24,8 +24,9 @@ log.info(f"looking for fhir at {data_dir}")
 resource_names = ["Patient", "MedicationRequest", "Condition", "Observation"]
 
 input_dir = os.environ.get("INPUT_DIR")
+output_dir = os.environ.get("OUTPUT_DIR")
 
-def query(pids, timestamp, spec_name=None, lib_name=None, addarg=None, input_file=False):
+def query(pids, timestamp, spec_name=None, lib_name=None, addarg=None, input_file=False, output_file=None):
     fhir = get_entries(json_in_dir=data_dir, pids=pids, resource_names=resource_names)
     if input_file:
         tmpdir = mkdtemp(dir=input_dir)
@@ -51,6 +52,9 @@ def query(pids, timestamp, spec_name=None, lib_name=None, addarg=None, input_fil
                 }]) + ([] if lib_name is None else [{
                     "id": "libraryPath",
                     "parameterValue": {"value": [lib_name]}
+                }]) + ([] if output_file is None else [{
+                    "id": "outputPath",
+                    "parameterValue": {"value": output_file}
                 }]) + ([] if addarg is None else [{
                     "id": "args",
                     "parameterValue": {"value": addarg}
@@ -150,6 +154,23 @@ def test_api_spec_data_from_file():
     assert result.status_code == 200
                 
     assert_result(result.json())
+    
+def test_api_spec_result_to_file():
+    timestamp = "2020-05-02T00:00:00Z"
+    pids = ["MickeyMouse"]
+
+    output_file = "result.json"
+    output_file_full_path = os.path.join(output_dir, output_file)
+    try:
+        result = query(pids, timestamp, output_file=output_file)
+
+        assert result.status_code == 204
+
+        with open(output_file_full_path) as outp:
+            obj = json.load(outp)
+        assert_result(obj)
+    finally:
+        os.remove(output_file_full_path)
     
 def test_api_spec2():
     timestamp = "2020-05-02T00:00:00Z"

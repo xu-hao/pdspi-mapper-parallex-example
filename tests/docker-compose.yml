@@ -8,6 +8,7 @@ services:
     command: ["-s", "-vv", "-x"] # , "-k", "test_api_spec5"]
     environment:
       INPUT_DIR: /shared
+      OUTPUT_DIR: /shared
     volumes:
       - $SHARED_DIR:/shared
     depends_on:
