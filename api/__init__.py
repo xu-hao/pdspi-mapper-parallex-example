@@ -159,12 +159,10 @@ def mappingClinicalFromData(body):
     else:
         with open(output_file) as o:
             for line in o:
-                logger.info(f"{line}")
                 ret = proc_res(jsonpickle.decode(line), ret)
         with open(output_file, "w") as o2:
             json.dump(jsonify(ret), o2)
         ret = None
-    logger.info(f"{ret}")
     return jsonify(ret)
         
 
