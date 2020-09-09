@@ -121,7 +121,9 @@ def mappingClinicalFromData(body):
     lib_path = list(map(lambda p: str(Path(__file__).parent.parent / "config" / p), pythonLibrary))
     logger.info(f"spec_path = {spec_path}")
     logger.info(f"lib_path = {lib_path}")
-    logger.info(f"output_path = {outputPath}")
+    
+    output_file = None if outputPath is None else os.path.join(output_dir, outputPath)
+    logger.info(f"output_path = {output_file}")
     
     with open(spec_path) as f:
         spec = f.read()
@@ -132,7 +134,6 @@ def mappingClinicalFromData(body):
     if profile is not None:
         yappi.start()
 
-    output_file = None if outputPath is None else os.path.join(output_dir, outputPath)
     res = start_python(nthreads, py = spec, data = {
         "patientIds": body["patientIds"],
         "patientVariables": patientVariables,

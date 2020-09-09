@@ -159,8 +159,10 @@ def filter_records(records, codes, resource_name):
                 })
             for c2 in coding2: 
                 if c2["system"] == system:
-                    if (is_regex and re.search(code, "^" + c2["code"] + "$")) or c2["code"] == code:
-                        records_filtered.append(record)
+                    code2 = c2.get("code")
+                    if code2 is not None:
+                        if (is_regex and re.search(code, "^" + code2 + "$")) or code2 == code:
+                            records_filtered.append(record)
     return Right(records_filtered)
 
 
