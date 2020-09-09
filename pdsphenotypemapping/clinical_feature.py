@@ -157,8 +157,8 @@ def filter_records(records, codes, resource_name):
                     "error": f"malformated record: no coding under code",
                     "record": record
                 })
-            for c2 in coding2: 
-                if c2["system"] == system:
+            for c2 in coding2:
+                if c2.get("system") == system:
                     code2 = c2.get("code")
                     if code2 is not None:
                         if (is_regex and re.search(code, "^" + code2 + "$")) or code2 == code:
